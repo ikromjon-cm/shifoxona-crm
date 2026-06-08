@@ -1,8 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = window.location.hostname === 'localhost'
-  ? '/api/v1'
-  : 'https://shifoxona-crm.onrender.com/api/v1'
+const API_BASE_URL = '/api/v1'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
