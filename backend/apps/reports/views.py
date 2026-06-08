@@ -2,6 +2,7 @@ import io
 import csv
 from datetime import datetime, timedelta
 from django.db import models
+from django.db.models.functions import TruncMonth
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import viewsets, status, generics
@@ -207,8 +208,8 @@ class DashboardView(generics.GenericAPIView):
 
         monthly_income = IncomeTransaction.objects.filter(
             created_at__year=timezone.now().year
-        ).extra(
-            {'month': "EXTRACT(month FROM created_at)"}
+        ).annotate(
+            month=TruncMonth('created_at')
         ).values('month').annotate(
             total=models.Sum('total_amount'),
             count=models.Count('id')
@@ -216,8 +217,8 @@ class DashboardView(generics.GenericAPIView):
 
         monthly_expense = ExpenseTransaction.objects.filter(
             created_at__year=timezone.now().year
-        ).extra(
-            {'month': "EXTRACT(month FROM created_at)"}
+        ).annotate(
+            month=TruncMonth('created_at')
         ).values('month').annotate(
             total=models.Sum('total_amount'),
             count=models.Count('id')
