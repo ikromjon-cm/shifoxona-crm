@@ -86,6 +86,9 @@ if DATABASE_URL:
                 'PASSWORD': m.group(2),
                 'HOST': m.group(3),
                 'PORT': m.group(4),
+                'OPTIONS': {
+                    'sslmode': 'require',
+                },
             }
         }
     else:
