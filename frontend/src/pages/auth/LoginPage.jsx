@@ -81,6 +81,15 @@ export default function LoginPage() {
               Ro'yxatdan o'tish
             </Link>
           </p>
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-center">
+            <Link to="/pharmacy/login" className="text-sm text-gray-500 hover:text-medical-600 hover:underline">
+              Dorixona hisobingiz bormi? Kirish
+            </Link>
+            <span className="mx-2 text-gray-300">|</span>
+            <Link to="/pharmacy/register" className="text-sm text-gray-500 hover:text-medical-600 hover:underline">
+              Ro'yxatdan o'tish
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
