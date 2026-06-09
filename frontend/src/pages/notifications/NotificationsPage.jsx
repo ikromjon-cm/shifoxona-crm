@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { notificationsAPI } from '@/services/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -28,6 +29,7 @@ const colors = {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => { fetchNotifications() }, [])
 
@@ -90,13 +92,14 @@ export default function NotificationsPage() {
             notifications.map((n) => {
               const Icon = icons[n.type] || Bell
               return (
-                <div
+                  <div
                   key={n.id}
-                  className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
+                  className={`flex items-start gap-4 p-4 rounded-lg border transition-colors cursor-pointer ${
                     n.is_read
                       ? 'border-gray-200 dark:border-gray-700'
                       : 'border-medical-200 dark:border-medical-800 bg-medical-50 dark:bg-medical-900/20'
                   }`}
+                  onClick={() => { if (n.link) navigate(n.link); if (!n.is_read) handleMarkRead(n.id) }}
                 >
                   <div className={`p-2 rounded-full bg-${colors[n.type] || 'gray'}-100 dark:bg-${colors[n.type] || 'gray'}-900`}>
                     <Icon className="h-5 w-5" />

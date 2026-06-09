@@ -2,8 +2,12 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from .models import Delivery
 from .serializers import DeliverySerializer, DeliveryCreateSerializer, CourierLocationSerializer
+from apps.notifications.models import Notification
+
+User = get_user_model()
 
 
 class DeliveryViewSet(viewsets.ModelViewSet):
@@ -41,8 +45,6 @@ class DeliveryViewSet(viewsets.ModelViewSet):
         if not courier_id:
             return Response({'error': 'Kuryer ID si talab qilinadi'}, status=status.HTTP_400_BAD_REQUEST)
         delivery = self.get_object()
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
         try:
             courier = User.objects.get(id=courier_id, role='operator')
         except User.DoesNotExist:
@@ -51,6 +53,17 @@ class DeliveryViewSet(viewsets.ModelViewSet):
         delivery.status = 'assigned'
         delivery.assigned_at = timezone.now()
         delivery.save()
+
+        pharmacy_user = delivery.order.pharmacy.user if delivery.order.pharmacy and delivery.order.pharmacy.user else None
+        if pharmacy_user and pharmacy_user.is_active:
+            Notification.objects.create(
+                user=pharmacy_user,
+                type='system',
+                title='Yetkazib berishga kuryer biriktirildi',
+                message=f'{delivery.order.order_number} - kuryer: {courier.get_full_name() or courier.login}',
+                link=f'/pharmacy/orders/{delivery.order.id}',
+            )
+
         return Response(DeliverySerializer(delivery, context={'request': request}).data)
 
     @action(detail=True, methods=['post'])
@@ -65,4 +78,16 @@ class DeliveryViewSet(viewsets.ModelViewSet):
         elif new_status == 'delivered':
             delivery.delivered_at = timezone.now()
         delivery.save()
+
+        status_labels = dict(Delivery.STATUS_CHOICES)
+        pharmacy_user = delivery.order.pharmacy.user if delivery.order.pharmacy and delivery.order.pharmacy.user else None
+        if pharmacy_user and pharmacy_user.is_active:
+            Notification.objects.create(
+                user=pharmacy_user,
+                type='system',
+                title='Yetkazib berish holati yangilandi',
+                message=f'{delivery.order.order_number} - "{status_labels.get(new_status)}"',
+                link=f'/pharmacy/orders/{delivery.order.id}',
+            )
+
         return Response(DeliverySerializer(delivery, context={'request': request}).data)

@@ -1,8 +1,8 @@
-import { Outlet, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Outlet, useNavigate, NavLink } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { Store, Package, ShoppingCart, ClipboardList, LogOut, Menu, X, LayoutDashboard } from 'lucide-react'
-import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { notificationsAPI } from '@/services/api'
+import { Store, Package, ShoppingCart, LogOut, Menu, X, LayoutDashboard, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -15,6 +15,19 @@ export default function PharmacyLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await notificationsAPI.unreadCount()
+        setUnreadCount(res.data.count || 0)
+      } catch { /* ignore */ }
+    }
+    fetchCount()
+    const interval = setInterval(fetchCount, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
@@ -65,6 +78,14 @@ export default function PharmacyLayout() {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1" />
+          <button onClick={() => navigate('/pharmacy/notifications')} className="relative p-2 rounded-lg hover:bg-gray-100">
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
           <span className="text-sm text-gray-500">{user?.pharmacy?.name}</span>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">

@@ -3,12 +3,16 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db import transaction
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from .models import Order, OrderItem
 from .serializers import (
     OrderListSerializer, OrderDetailSerializer, OrderCreateSerializer,
     OrderStatusSerializer, OrderReceiveSerializer
 )
 from apps.accounts.permissions import IsSuperAdmin
+from apps.notifications.models import Notification
+
+User = get_user_model()
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -69,6 +73,17 @@ class OrderViewSet(viewsets.ModelViewSet):
             serializer.validated_data.get('note') and setattr(order, 'note', serializer.validated_data['note'])
             order.save()
 
+        status_labels = dict(Order.STATUS_CHOICES)
+        pharmacy_user = order.pharmacy.user if order.pharmacy and order.pharmacy.user else None
+        if pharmacy_user and pharmacy_user.is_active:
+            Notification.objects.create(
+                user=pharmacy_user,
+                type='system',
+                title='Buyurtma holati yangilandi',
+                message=f'{order.order_number} - "{status_labels.get(new_status)}"',
+                link=f'/pharmacy/orders/{order.id}',
+            )
+
         return Response(OrderDetailSerializer(order, context={'request': request}).data)
 
     @action(detail=True, methods=['post'])
@@ -95,6 +110,15 @@ class OrderViewSet(viewsets.ModelViewSet):
                 pharmacy_product.save()
 
             order.save()
+
+        for user in User.objects.filter(is_active=True, is_blocked=False, role__in=['superadmin', 'operator']):
+            Notification.objects.create(
+                user=user,
+                type='system',
+                title='Buyurtma qabul qilindi',
+                message=f'{order.order_number} - {order.pharmacy.name} tomonidan qabul qilindi',
+                link=f'/warehouse/delivery',
+            )
 
         return Response(OrderDetailSerializer(order, context={'request': request}).data)
 
