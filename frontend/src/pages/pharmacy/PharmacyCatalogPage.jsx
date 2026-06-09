@@ -145,7 +145,20 @@ export default function PharmacyCatalogPage() {
                         >
                           <Minus className="h-3 w-3" />
                         </button>
-                        <span className="px-2 text-sm">{quantities[m.id] || 1}</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max={m.quantity}
+                          className="w-12 text-center text-sm border-0 bg-transparent focus:outline-none focus:ring-0"
+                          value={quantities[m.id] || 1}
+                          onChange={(e) => {
+                            const v = parseInt(e.target.value) || 1
+                            setQuantities(prev => ({
+                              ...prev,
+                              [m.id]: Math.min(m.quantity, Math.max(1, v))
+                            }))
+                          }}
+                        />
                         <button
                           type="button"
                           className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800"

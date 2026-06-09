@@ -28,7 +28,17 @@ const downloadExcel = (apiMethod, filename) => async () => {
   }
 }
 
-const defaultIcon = L.icon({
+const pharmacyIcon = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+})
+
+const courierIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -52,11 +62,13 @@ const statusBadge = (status) => {
 
 export default function DeliveryPage() {
   const [orders, setOrders] = useState([])
+  const [deliveries, setDeliveries] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState(null)
+  const [selectedDelivery, setSelectedDelivery] = useState(null)
   const [showMap, setShowMap] = useState(false)
 
-  useEffect(() => { fetchOrders() }, [])
+  useEffect(() => { fetchOrders(); fetchDeliveries() }, [])
 
   const fetchOrders = async () => {
     try {
@@ -64,8 +76,18 @@ export default function DeliveryPage() {
       setOrders(res.data.results || res.data)
     } catch (err) {
       toast.error('Buyurtmalarni yuklashda xatolik')
-    } finally { setLoading(false) }
+    } finally { if (deliveries.length) setLoading(false) }
   }
+
+  const fetchDeliveries = async () => {
+    try {
+      const res = await deliveryAPI.list()
+      setDeliveries(res.data.results || res.data)
+    } catch (err) { /* ignore */ }
+    finally { setLoading(false) }
+  }
+
+  const getDeliveryForOrder = (orderId) => deliveries.find(d => d.order === orderId)
 
   const handleStatusUpdate = async (orderId, status) => {
     try {
@@ -117,7 +139,7 @@ export default function DeliveryPage() {
             </Button>
           )}
           {r.pharmacy_latitude && r.pharmacy_longitude && (
-            <Button size="sm" variant="ghost" onClick={() => { setSelectedOrder(r); setShowMap(true) }}>
+            <Button size="sm" variant="ghost" onClick={() => { setSelectedOrder(r); setSelectedDelivery(getDeliveryForOrder(r.id)); setShowMap(true) }}>
               <MapPin className="h-4 w-4" />
             </Button>
           )}
@@ -154,7 +176,8 @@ export default function DeliveryPage() {
           <div className="h-96 w-full rounded-lg overflow-hidden">
             <MapContainer
               center={[selectedOrder.pharmacy_latitude, selectedOrder.pharmacy_longitude]}
-              zoom={15} className="h-full w-full"
+              zoom={selectedDelivery?.courier_lat ? 13 : 15}
+              className="h-full w-full"
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -162,17 +185,18 @@ export default function DeliveryPage() {
               />
               <Marker
                 position={[selectedOrder.pharmacy_latitude, selectedOrder.pharmacy_longitude]}
-                icon={defaultIcon}
+                icon={pharmacyIcon}
               >
                 <Popup>
                   <strong>{selectedOrder.pharmacy_name}</strong><br />
                   {selectedOrder.pharmacy_phone}<br />
+                  <span className="text-xs text-gray-500">Dorixona</span><br />
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${selectedOrder.pharmacy_latitude},${selectedOrder.pharmacy_longitude}`}
                     target="_blank" rel="noopener noreferrer"
                     className="text-blue-600 underline text-sm"
                   >
-                    Google Maps da ochish
+                    Google Maps
                   </a>
                   <br />
                   <a
@@ -180,10 +204,31 @@ export default function DeliveryPage() {
                     target="_blank" rel="noopener noreferrer"
                     className="text-blue-600 underline text-sm"
                   >
-                    OpenStreetMap da ochish
+                    OSM
                   </a>
                 </Popup>
               </Marker>
+              {selectedDelivery?.courier_lat && selectedDelivery?.courier_lng && (
+                <Marker
+                  position={[selectedDelivery.courier_lat, selectedDelivery.courier_lng]}
+                  icon={courierIcon}
+                >
+                  <Popup>
+                    <strong>Kuryer</strong><br />
+                    {selectedDelivery.courier_name || 'Noma\'lum'}<br />
+                    <span className="text-xs text-gray-500">
+                      Oxirgi yangilanish: {formatDateTime(selectedDelivery.courier_location_updated_at)}
+                    </span><br />
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&origin=${selectedDelivery.courier_lat},${selectedDelivery.courier_lng}&destination=${selectedOrder.pharmacy_latitude},${selectedOrder.pharmacy_longitude}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="text-blue-600 underline text-sm"
+                    >
+                      Kuryerdan dorixonaga yo'nalish
+                    </a>
+                  </Popup>
+                </Marker>
+              )}
             </MapContainer>
           </div>
         )}
