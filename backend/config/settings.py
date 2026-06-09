@@ -76,19 +76,25 @@ ASGI_APPLICATION = 'config.asgi.application'
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
     import re
-    from urllib.parse import unquote_plus
-    m = re.match(r'postgres(?:ql)?://(.+?):(.+?)@(.+?):(\d+)/(.+?)$', DATABASE_URL)
+    from urllib.parse import unquote_plus, urlparse, parse_qs
+    m = re.match(r'postgres(?:ql)?://(.+?):(.+?)@(.+?)(?::(\d+))?/(.+?)$', DATABASE_URL)
     if m:
+        host = m.group(3)
+        port = m.group(4)
+        rest = m.group(5)
+        dbname = rest.split('?')[0]
+        qs = parse_qs(rest.split('?')[1]) if '?' in rest else {}
+        sslmode = qs.get('sslmode', ['require'])[0]
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': unquote_plus(m.group(5)),
+                'NAME': unquote_plus(dbname),
                 'USER': unquote_plus(m.group(1)),
                 'PASSWORD': unquote_plus(m.group(2)),
-                'HOST': m.group(3),
-                'PORT': m.group(4),
+                'HOST': host,
+                'PORT': port or '5432',
                 'OPTIONS': {
-                    'sslmode': 'require',
+                    'sslmode': sslmode,
                 },
             }
         }
@@ -98,7 +104,7 @@ if DATABASE_URL:
                 'ENGINE': 'django.db.backends.postgresql',
                 'NAME': os.getenv('DB_NAME', 'shifoxona_db'),
                 'USER': os.getenv('DB_USER', 'postgres'),
-                'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+                'PASSWORD': os.getenv('ikromjon09', 'postgres'),
                 'HOST': os.getenv('DB_HOST', 'localhost'),
                 'PORT': os.getenv('DB_PORT', '5432'),
             }

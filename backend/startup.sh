@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 
-# Force SQLite - ignore Render's DATABASE_URL env var
-unset DATABASE_URL
+export DATABASE_URL="postgresql://neondb_owner:npg_Jlkj36WbpVPr@ep-royal-silence-abmtlvjg.eu-west-2.aws.neon.tech/neondb?sslmode=require"
 
 mkdir -p staticfiles media logs
 
