@@ -11,7 +11,7 @@ class MedicineCategorySerializer(serializers.ModelSerializer):
 class SupplierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Supplier
-        fields = ['id', 'name', 'contact_person', 'phone', 'email', 'address', 'latitude', 'longitude', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'contact_person', 'phone', 'email', 'address', 'region', 'district', 'latitude', 'longitude', 'is_active', 'created_at', 'updated_at']
 
 
 class MedicineBatchSerializer(serializers.ModelSerializer):

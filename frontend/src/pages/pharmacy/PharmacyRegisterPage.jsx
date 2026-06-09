@@ -4,7 +4,8 @@ import { pharmaciesAPI } from '@/services/api'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import LocationPicker from '@/components/ui/LocationPicker'
-import { MapPin, Store, ArrowLeft } from 'lucide-react'
+import RegionDistrictPicker from '@/components/ui/RegionDistrictPicker'
+import { Store } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const defaultForm = {
@@ -87,10 +88,14 @@ export default function PharmacyRegisterPage() {
                 <Input label="Login" value={form.login} onChange={(e) => update('login', e.target.value)} required />
                 <Input label="Parol" type="password" value={form.password} onChange={(e) => update('password', e.target.value)} required />
                 <Input label="Parolni takrorlang" type="password" value={form.password_confirm} onChange={(e) => update('password_confirm', e.target.value)} required />
-                <Input label="Viloyat" value={form.region} onChange={(e) => update('region', e.target.value)} required />
-                <Input label="Tuman" value={form.district} onChange={(e) => update('district', e.target.value)} required />
+                <RegionDistrictPicker
+                  region={form.region}
+                  district={form.district}
+                  onRegionChange={(v) => update('region', v)}
+                  onDistrictChange={(v) => update('district', v)}
+                />
                 <div>
-                  <label className="text-sm font-medium mb-1 block">To'liq manzil</label>
+                  <label className="text-sm font-medium mb-1 block">To'liq manzil (ko'cha, uy)</label>
                   <textarea className="flex h-20 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-medical-500" value={form.address} onChange={(e) => update('address', e.target.value)} required />
                 </div>
                 <div className="flex justify-between pt-4">
@@ -103,18 +108,13 @@ export default function PharmacyRegisterPage() {
             {step === 3 && (
               <>
                 <div>
-                  <label className="text-sm font-medium mb-1 block flex items-center gap-1">
-                    <MapPin className="h-4 w-4" /> Xaritadan joylashuvni belgilang
+                  <label className="text-sm font-medium mb-1 block">
+                    Xaritadan joylashuvni belgilang
                   </label>
                   <LocationPicker
                     position={form.latitude && form.longitude ? { lat: form.latitude, lng: form.longitude } : null}
                     onLocationSelect={handleLocationSelect}
                   />
-                  {form.latitude && form.longitude && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Kenglik: {form.latitude.toFixed(4)}, Uzunlik: {form.longitude.toFixed(4)}
-                    </p>
-                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">Dorixona rasmi (ixtiyoriy)</label>

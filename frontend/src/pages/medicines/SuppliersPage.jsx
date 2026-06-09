@@ -7,10 +7,12 @@ import Input from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Badge } from '@/components/ui/Badge'
 import LocationPicker from '@/components/ui/LocationPicker'
+import RegionDistrictPicker from '@/components/ui/RegionDistrictPicker'
 import { Plus, Edit, Trash2, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { REGIONS } from '@/data/uzbekistan'
 
-const defaultForm = { name: '', contact_person: '', phone: '', email: '', address: '', latitude: null, longitude: null }
+const defaultForm = { name: '', contact_person: '', phone: '', email: '', region: '', district: '', address: '', latitude: null, longitude: null }
 
 export default function SuppliersPage() {
   const [data, setData] = useState([])
@@ -62,6 +64,8 @@ export default function SuppliersPage() {
       contact_person: row.contact_person || '',
       phone: row.phone,
       email: row.email || '',
+      region: row.region || '',
+      district: row.district || '',
       address: row.address || '',
       latitude: row.latitude,
       longitude: row.longitude,
@@ -89,6 +93,7 @@ export default function SuppliersPage() {
     { key: 'contact_person', label: "Aloqa shaxsi" },
     { key: 'phone', label: 'Telefon' },
     { key: 'email', label: 'Email' },
+    { key: 'region', label: 'Viloyat', render: (r) => REGIONS.find(reg => reg.value === r.region)?.label || r.region },
     {
       key: 'is_active', label: 'Holat',
       render: (row) => <Badge variant={row.is_active ? 'success' : 'danger'}>{row.is_active ? 'Faol' : 'Faol emas'}</Badge>
@@ -129,8 +134,14 @@ export default function SuppliersPage() {
           <Input label="Aloqa shaxsi" value={form.contact_person} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} />
           <Input label="Telefon" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
           <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <RegionDistrictPicker
+            region={form.region}
+            district={form.district}
+            onRegionChange={(v) => setForm({ ...form, region: v })}
+            onDistrictChange={(v) => setForm({ ...form, district: v })}
+          />
           <div>
-            <label className="text-sm font-medium mb-1 block">Manzil</label>
+            <label className="text-sm font-medium mb-1 block">Manzil (ko'cha, uy)</label>
             <textarea className="flex h-20 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-medical-500" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
           </div>
           <div>

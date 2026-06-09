@@ -7,11 +7,13 @@ import Input from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Badge } from '@/components/ui/Badge'
 import LocationPicker from '@/components/ui/LocationPicker'
+import RegionDistrictPicker from '@/components/ui/RegionDistrictPicker'
 import { Plus, Edit, Trash2, Eye, MapPin } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { REGIONS } from '@/data/uzbekistan'
 
-const defaultForm = { name: '', address: '', latitude: null, longitude: null, phone: '', responsible_person: '' }
+const defaultForm = { name: '', region: '', district: '', address: '', latitude: null, longitude: null, phone: '', responsible_person: '' }
 
 export default function PharmaciesPage() {
   const [data, setData] = useState([])
@@ -64,7 +66,7 @@ export default function PharmaciesPage() {
   const handleEdit = (row) => {
     setEditing(row)
     setForm({
-      name: row.name, address: row.address,
+      name: row.name, region: row.region || '', district: row.district || '', address: row.address,
       latitude: row.latitude, longitude: row.longitude,
       phone: row.phone, responsible_person: row.responsible_person,
     })
@@ -77,6 +79,7 @@ export default function PharmaciesPage() {
 
   const columns = [
     { key: 'name', label: 'Nomi' },
+    { key: 'region', label: 'Viloyat', render: (r) => REGIONS.find(reg => reg.value === r.region)?.label || r.region },
     { key: 'address', label: 'Manzil' },
     { key: 'phone', label: 'Telefon' },
     { key: 'responsible_person', label: "Mas'ul shaxs" },
@@ -113,8 +116,14 @@ export default function PharmaciesPage() {
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Dorixonani tahrirlash' : 'Yangi dorixona'} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Dorixona nomi" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+          <RegionDistrictPicker
+            region={form.region}
+            district={form.district}
+            onRegionChange={(v) => setForm({ ...form, region: v })}
+            onDistrictChange={(v) => setForm({ ...form, district: v })}
+          />
           <div>
-            <label className="text-sm font-medium mb-1 block">Manzil</label>
+            <label className="text-sm font-medium mb-1 block">Manzil (ko'cha, uy)</label>
             <textarea className="flex h-20 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-medical-500" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
           </div>
           <div>
