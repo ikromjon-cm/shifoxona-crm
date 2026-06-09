@@ -34,7 +34,7 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.order_number:
-            last = Order.objects.select_for_update().order_by('id').last()
+            last = Order.objects.order_by('id').last()
             num = (last.id + 1) if last else 1
             self.order_number = f'ORDER-{num:06d}'
         super().save(*args, **kwargs)
