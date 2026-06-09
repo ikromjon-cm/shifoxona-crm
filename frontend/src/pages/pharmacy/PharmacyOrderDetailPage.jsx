@@ -84,11 +84,11 @@ export default function PharmacyOrderDetailPage() {
       </div>
 
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex items-center justify-between overflow-x-auto py-2">
             {statusFlow.map((s, i) => (
-              <div key={s.key} className="flex items-center gap-2 flex-1">
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium
+              <div key={s.key} className="flex items-center gap-1 md:gap-2 flex-1 min-w-0">
+                <div className={`h-6 w-6 md:h-8 md:w-8 rounded-full flex items-center justify-center text-[10px] md:text-sm font-medium flex-shrink-0
                   ${i <= currentIdx ? 'bg-medical-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'}`}>
                   {i + 1}
                 </div>
@@ -96,12 +96,17 @@ export default function PharmacyOrderDetailPage() {
               </div>
             ))}
           </div>
-          <div className="flex justify-between mt-2 px-1">
+          <div className="hidden md:flex justify-between mt-2 px-1">
             {statusFlow.map(s => (
               <span key={s.key} className={`text-xs ${statusFlow.findIndex(x => x.key === order.status) >= statusFlow.findIndex(x => x.key === s.key) ? 'text-medical-600 font-medium' : 'text-gray-400'}`}>
                 {s.label}
               </span>
             ))}
+          </div>
+          <div className="flex md:hidden justify-center mt-2">
+            <span className="text-xs font-medium text-medical-600">
+              {statusFlow.find(s => s.key === order.status)?.label || order.status}
+            </span>
           </div>
         </CardContent>
       </Card>

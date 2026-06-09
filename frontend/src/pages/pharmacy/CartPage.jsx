@@ -129,7 +129,7 @@ export default function CartPage() {
           ))}
         </div>
 
-        <div>
+        <div className="lg:sticky lg:top-4 self-start">
           <Card>
             <CardContent className="p-4 space-y-4">
               <h3 className="font-semibold">Buyurtma yakuni</h3>
