@@ -153,7 +153,7 @@ export default function CartPage() {
                   placeholder="Buyurtmaga izoh qoldiring..."
                 />
               </div>
-              <Button className="w-full" onClick={placeOrder} loading={loading}>
+              <Button className="w-full" onClick={placeOrder} isLoading={loading}>
                 Buyurtma berish ({total.toLocaleString()} so'm)
               </Button>
             </CardContent>

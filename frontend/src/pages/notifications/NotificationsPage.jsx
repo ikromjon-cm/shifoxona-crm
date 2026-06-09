@@ -17,13 +17,13 @@ const icons = {
   medicine: Package,
 }
 
-const colors = {
-  low_stock: 'rose',
-  expiry: 'amber',
-  income: 'emerald',
-  expense: 'blue',
-  system: 'violet',
-  medicine: 'medical',
+const bgColors = {
+  low_stock: 'bg-rose-100 dark:bg-rose-900/30',
+  expiry: 'bg-amber-100 dark:bg-amber-900/30',
+  income: 'bg-emerald-100 dark:bg-emerald-900/30',
+  expense: 'bg-blue-100 dark:bg-blue-900/30',
+  system: 'bg-violet-100 dark:bg-violet-900/30',
+  medicine: 'bg-medical-100 dark:bg-medical-900/30',
 }
 
 export default function NotificationsPage() {
@@ -101,7 +101,7 @@ export default function NotificationsPage() {
                   }`}
                   onClick={() => { if (n.link) navigate(n.link); if (!n.is_read) handleMarkRead(n.id) }}
                 >
-                  <div className={`p-2 rounded-full bg-${colors[n.type] || 'gray'}-100 dark:bg-${colors[n.type] || 'gray'}-900`}>
+                  <div className={`p-2 rounded-full ${bgColors[n.type] || 'bg-gray-100 dark:bg-gray-900'}`}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">

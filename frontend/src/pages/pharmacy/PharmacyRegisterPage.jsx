@@ -129,7 +129,7 @@ export default function PharmacyRegisterPage() {
                 </div>
                 <div className="flex justify-between pt-4">
                   <Button variant="outline" type="button" onClick={() => setStep(2)}>Orqaga</Button>
-                  <Button type="submit" loading={loading}>Ro'yxatdan o'tish</Button>
+                  <Button type="submit" isLoading={loading}>Ro'yxatdan o'tish</Button>
                 </div>
               </>
             )}

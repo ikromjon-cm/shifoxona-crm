@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
-import { CheckCircle, XCircle, Clock, Eye } from 'lucide-react'
+import { CheckCircle, XCircle, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const statusBadge = (pharmacy) => {

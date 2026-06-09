@@ -45,7 +45,7 @@ export default function PharmacyLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input label="Login" value={form.login} onChange={(e) => setForm({ ...form, login: e.target.value })} required />
             <Input label="Parol" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
-            <Button type="submit" className="w-full" loading={loading}>Kirish</Button>
+            <Button type="submit" className="w-full" isLoading={loading}>Kirish</Button>
           </form>
         </div>
 
