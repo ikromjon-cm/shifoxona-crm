@@ -4,6 +4,9 @@ from rest_framework.decorators import action
 from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+import openpyxl
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from .models import Order, OrderItem
 from .serializers import (
     OrderListSerializer, OrderDetailSerializer, OrderCreateSerializer,
@@ -130,3 +133,50 @@ class OrderViewSet(viewsets.ModelViewSet):
         page = self.paginate_queryset(qs)
         serializer = OrderListSerializer(page or qs, many=True, context={'request': request})
         return self.get_paginated_response(serializer.data) if page else Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def export_excel(self, request):
+        qs = self.get_queryset().select_related('pharmacy', 'created_by').prefetch_related('items__medicine')
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Buyurtmalar'
+
+        header_font = Font(bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color='2563EB', end_color='2563EB', fill_type='solid')
+        thin_border = Border(
+            left=Side(style='thin'), right=Side(style='thin'),
+            top=Side(style='thin'), bottom=Side(style='thin')
+        )
+
+        headers = ['Buyurtma raqami', 'Dorixona', 'Holati', 'Mahsulotlar soni', 'Jami summa', 'Izoh', 'Yaratilgan vaqt']
+        for col, h in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=h)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center')
+            cell.border = thin_border
+
+        status_labels = dict(Order.STATUS_CHOICES)
+        for row, order in enumerate(qs, 2):
+            data = [
+                order.order_number,
+                order.pharmacy.name if order.pharmacy else '-',
+                status_labels.get(order.status, order.status),
+                order.total_items,
+                float(order.total_amount),
+                order.note or '',
+                order.created_at.strftime('%d.%m.%Y %H:%M') if order.created_at else '',
+            ]
+            for col, val in enumerate(data, 1):
+                cell = ws.cell(row=row, column=col, value=val)
+                cell.border = thin_border
+
+        for col in range(1, len(headers) + 1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 20
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="buyurtmalar.xlsx"'
+        wb.save(response)
+        return response

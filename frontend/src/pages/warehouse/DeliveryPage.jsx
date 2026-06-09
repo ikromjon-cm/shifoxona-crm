@@ -7,9 +7,26 @@ import Button from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
-import { MapPin, Truck } from 'lucide-react'
+import { MapPin, Truck, Download } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
 import toast from 'react-hot-toast'
+
+const downloadExcel = (apiMethod, filename) => async () => {
+  try {
+    const res = await apiMethod()
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', filename)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    toast.success('Yuklab olindi')
+  } catch (err) {
+    toast.error('Xatolik yuz berdi')
+  }
+}
 
 const defaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -115,6 +132,14 @@ export default function DeliveryPage() {
         <div>
           <h1 className="text-2xl font-bold">Yetkazib berish</h1>
           <p className="text-gray-500 mt-1">Barcha buyurtmalar va yetkazib berish holati</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={downloadExcel(ordersAPI.exportExcel, 'buyurtmalar.xlsx')}>
+            <Download className="h-4 w-4 mr-1" /> Buyurtmalar
+          </Button>
+          <Button variant="outline" size="sm" onClick={downloadExcel(deliveryAPI.exportExcel, 'yetkazib_berish.xlsx')}>
+            <Download className="h-4 w-4 mr-1" /> Yetkazib berish
+          </Button>
         </div>
       </div>
 

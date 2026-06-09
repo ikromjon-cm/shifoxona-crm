@@ -130,6 +130,7 @@ export const ordersAPI = {
   updateStatus: (id, data) => api.post(`/orders/orders/${id}/update_status/`, data),
   receive: (id, data) => api.post(`/orders/orders/${id}/receive/`, data),
   myOrders: () => api.get('/orders/orders/my_orders/'),
+  exportExcel: () => api.get('/orders/orders/export_excel/', { responseType: 'blob' }),
 }
 
 export const deliveryAPI = {
@@ -139,6 +140,7 @@ export const deliveryAPI = {
   assignCourier: (id, data) => api.post(`/delivery/deliveries/${id}/assign_courier/`, data),
   updateStatus: (id, data) => api.post(`/delivery/deliveries/${id}/update_status/`, data),
   updateLocation: (id, data) => api.post(`/delivery/deliveries/${id}/update_location/`, data),
+  exportExcel: () => api.get('/delivery/deliveries/export_excel/', { responseType: 'blob' }),
 }
 
 export const inventoryAPI = {

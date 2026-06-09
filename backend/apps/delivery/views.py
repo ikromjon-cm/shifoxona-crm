@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+import openpyxl
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from .models import Delivery
 from .serializers import DeliverySerializer, DeliveryCreateSerializer, CourierLocationSerializer
 from apps.notifications.models import Notification
@@ -91,3 +94,49 @@ class DeliveryViewSet(viewsets.ModelViewSet):
             )
 
         return Response(DeliverySerializer(delivery, context={'request': request}).data)
+
+    @action(detail=False, methods=['get'])
+    def export_excel(self, request):
+        qs = self.get_queryset().select_related('order__pharmacy', 'courier')
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Yetkazib berish'
+
+        header_font = Font(bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color='2563EB', end_color='2563EB', fill_type='solid')
+        thin_border = Border(
+            left=Side(style='thin'), right=Side(style='thin'),
+            top=Side(style='thin'), bottom=Side(style='thin')
+        )
+
+        headers = ['Buyurtma', 'Dorixona', 'Kuryer', 'Holati', 'Manzil', 'Yaratilgan vaqt']
+        for col, h in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=h)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center')
+            cell.border = thin_border
+
+        status_labels = dict(Delivery.STATUS_CHOICES)
+        for row, d in enumerate(qs, 2):
+            data = [
+                d.order.order_number if d.order else '-',
+                d.order.pharmacy.name if d.order and d.order.pharmacy else '-',
+                d.courier.get_full_name() or (d.courier.login if d.courier else '-'),
+                status_labels.get(d.status, d.status),
+                d.delivery_address or '',
+                d.created_at.strftime('%d.%m.%Y %H:%M') if d.created_at else '',
+            ]
+            for col, val in enumerate(data, 1):
+                cell = ws.cell(row=row, column=col, value=val)
+                cell.border = thin_border
+
+        for col in range(1, len(headers) + 1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 20
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="yetkazib_berish.xlsx"'
+        wb.save(response)
+        return response
