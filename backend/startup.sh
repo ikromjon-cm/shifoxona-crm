@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Force SQLite - ignore Render's DATABASE_URL env var
+unset DATABASE_URL
+
 mkdir -p staticfiles media logs
 
 python manage.py migrate --noinput || true
