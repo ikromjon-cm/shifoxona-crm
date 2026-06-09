@@ -5,7 +5,7 @@ from .models import Pharmacy, PharmacyProduct
 class PharmacySerializer(serializers.ModelSerializer):
     class Meta:
         model = Pharmacy
-        fields = ['id', 'name', 'address', 'phone', 'responsible_person', 'responsible_phone', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'address', 'latitude', 'longitude', 'phone', 'responsible_person', 'is_active', 'created_at', 'updated_at']
 
 
 class PharmacyProductSerializer(serializers.ModelSerializer):
@@ -23,4 +23,4 @@ class PharmacyDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pharmacy
-        fields = ['id', 'name', 'address', 'phone', 'responsible_person', 'responsible_phone', 'is_active', 'products', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'address', 'latitude', 'longitude', 'phone', 'responsible_person', 'is_active', 'products', 'created_at', 'updated_at']
