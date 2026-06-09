@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import {
   LayoutDashboard, Pill, Warehouse, Building2, Package,
   FileText, Bell, Shield, Users, Menu, X, LogOut,
-  TrendingUp, TrendingDown, Settings
+  TrendingUp, TrendingDown, Settings, Truck, CheckSquare
 } from 'lucide-react'
 
 const navSections = [
@@ -29,6 +29,7 @@ const navSections = [
       { to: '/inventory', icon: Warehouse, label: 'Inventar' },
       { to: '/warehouse/income', icon: TrendingUp, label: 'Kirim' },
       { to: '/warehouse/expense', icon: TrendingDown, label: 'Tarqatish' },
+      { to: '/warehouse/delivery', icon: Truck, label: 'Yetkazib berish' },
       { to: '/warehouse/movements', icon: Warehouse, label: 'Harakatlar' },
     ],
   },
@@ -55,6 +56,7 @@ const navSections = [
 const adminSection = {
   label: 'Admin',
   items: [
+    { to: '/pharmacies/approval', icon: CheckSquare, label: 'Dorixona tasdiqlash' },
     { to: '/users', icon: Users, label: 'Foydalanuvchilar' },
     { to: '/audit-logs', icon: Shield, label: 'Audit log' },
   ],

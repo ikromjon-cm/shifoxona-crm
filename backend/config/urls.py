@@ -15,6 +15,8 @@ urlpatterns = [
     path(f'{api_prefix}inventory/', include('apps.inventory.urls')),
     path(f'{api_prefix}reports/', include('apps.reports.urls')),
     path(f'{api_prefix}notifications/', include('apps.notifications.urls')),
+    path(f'{api_prefix}orders/', include('apps.orders.urls')),
+    path(f'{api_prefix}delivery/', include('apps.delivery.urls')),
     path(f'{api_prefix}audit-logs/', include('apps.audit_logs.urls')),
 
     # API docs

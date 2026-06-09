@@ -24,6 +24,7 @@ class User(AbstractUser):
     ROLE_CHOICES = (
         ('superadmin', 'Super Admin'),
         ('operator', 'Operator'),
+        ('pharmacy', 'Dorixona'),
     )
     login = models.CharField(max_length=150, unique=True, verbose_name='Login')
     first_name = models.CharField(max_length=150, verbose_name='Ism')

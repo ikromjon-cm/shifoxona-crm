@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'apps.reports',
     'apps.notifications',
     'apps.audit_logs',
+    'apps.orders.apps.OrdersConfig',
+    'apps.delivery.apps.DeliveryConfig',
 ]
 
 MIDDLEWARE = [

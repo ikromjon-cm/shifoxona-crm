@@ -118,6 +118,27 @@ export const pharmaciesAPI = {
   get: (id) => api.get(`/pharmacies/pharmacies/${id}/`),
   update: (id, data) => api.patch(`/pharmacies/pharmacies/${id}/`, data),
   delete: (id) => api.delete(`/pharmacies/pharmacies/${id}/`),
+  register: (data) => api.post('/pharmacies/register/', data),
+  login: (data) => api.post('/pharmacies/login/', data),
+  approve: (id, data) => api.post(`/pharmacies/approve/${id}/`, data),
+}
+
+export const ordersAPI = {
+  list: (params) => api.get('/orders/orders/', { params }),
+  create: (data) => api.post('/orders/orders/', data),
+  get: (id) => api.get(`/orders/orders/${id}/`),
+  updateStatus: (id, data) => api.post(`/orders/orders/${id}/update_status/`, data),
+  receive: (id, data) => api.post(`/orders/orders/${id}/receive/`, data),
+  myOrders: () => api.get('/orders/orders/my_orders/'),
+}
+
+export const deliveryAPI = {
+  list: (params) => api.get('/delivery/deliveries/', { params }),
+  create: (data) => api.post('/delivery/deliveries/', data),
+  get: (id) => api.get(`/delivery/deliveries/${id}/`),
+  assignCourier: (id, data) => api.post(`/delivery/deliveries/${id}/assign_courier/`, data),
+  updateStatus: (id, data) => api.post(`/delivery/deliveries/${id}/update_status/`, data),
+  updateLocation: (id, data) => api.post(`/delivery/deliveries/${id}/update_location/`, data),
 }
 
 export const inventoryAPI = {
