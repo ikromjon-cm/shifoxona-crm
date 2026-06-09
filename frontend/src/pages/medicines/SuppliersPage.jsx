@@ -6,15 +6,18 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Badge } from '@/components/ui/Badge'
-import { Plus, Edit, Trash2 } from 'lucide-react'
+import LocationPicker from '@/components/ui/LocationPicker'
+import { Plus, Edit, Trash2, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+const defaultForm = { name: '', contact_person: '', phone: '', email: '', address: '', latitude: null, longitude: null }
 
 export default function SuppliersPage() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ name: '', contact_person: '', phone: '', email: '', address: '' })
+  const [form, setForm] = useState({ ...defaultForm })
 
   useEffect(() => { fetchData() }, [])
 
@@ -39,7 +42,7 @@ export default function SuppliersPage() {
       }
       setShowModal(false)
       setEditing(null)
-      setForm({ name: '', contact_person: '', phone: '', email: '', address: '' })
+      setForm({ ...defaultForm })
       fetchData()
     } catch (err) {
       const msg = err.response?.data
@@ -60,6 +63,8 @@ export default function SuppliersPage() {
       phone: row.phone,
       email: row.email || '',
       address: row.address || '',
+      latitude: row.latitude,
+      longitude: row.longitude,
     })
     setShowModal(true)
   }
@@ -73,6 +78,10 @@ export default function SuppliersPage() {
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Xatolik')
     }
+  }
+
+  const handleLocationSelect = ({ lat, lng }) => {
+    setForm(prev => ({ ...prev, latitude: lat, longitude: lng }))
   }
 
   const columns = [
@@ -106,7 +115,7 @@ export default function SuppliersPage() {
           <h1 className="text-2xl font-bold">Yetkazib beruvchilar</h1>
           <p className="text-gray-500 mt-1">Yetkazib beruvchilarni boshqarish</p>
         </div>
-        <Button onClick={() => { setEditing(null); setForm({ name: '', contact_person: '', phone: '', email: '', address: '' }); setShowModal(true) }}>
+        <Button onClick={() => { setEditing(null); setForm({ ...defaultForm }); setShowModal(true) }}>
           <Plus className="h-4 w-4 mr-2" /> Yangi yetkazib beruvchi
         </Button>
       </div>
@@ -114,19 +123,29 @@ export default function SuppliersPage() {
         <DataTable columns={columns} data={data} loading={loading} />
       </CardContent></Card>
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Yetkazib beruvchini tahrirlash' : 'Yangi yetkazib beruvchi'}>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Yetkazib beruvchini tahrirlash' : 'Yangi yetkazib beruvchi'} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Nomi" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           <Input label="Aloqa shaxsi" value={form.contact_person} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} />
           <Input label="Telefon" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
           <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Manzil</label>
-            <textarea
-              className="flex h-20 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-medical-500 mt-1"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
+            <label className="text-sm font-medium mb-1 block">Manzil</label>
+            <textarea className="flex h-20 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-medical-500" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-1 block flex items-center gap-1">
+              <MapPin className="h-4 w-4" /> Xaritadan joy belgilash
+            </label>
+            <LocationPicker
+              position={form.latitude && form.longitude ? { lat: form.latitude, lng: form.longitude } : null}
+              onLocationSelect={handleLocationSelect}
             />
+            {form.latitude && form.longitude && (
+              <p className="text-xs text-gray-500 mt-1">
+                Kenglik: {form.latitude.toFixed(4)}, Uzunlik: {form.longitude.toFixed(4)}
+              </p>
+            )}
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="outline" type="button" onClick={() => setShowModal(false)}>Bekor qilish</Button>

@@ -22,6 +22,8 @@ class Supplier(models.Model):
     phone = models.CharField(max_length=20, verbose_name='Telefon')
     email = models.EmailField(blank=True, null=True, verbose_name='Email')
     address = models.TextField(blank=True, null=True, verbose_name='Manzil')
+    latitude = models.FloatField(blank=True, null=True, verbose_name='Kenglik')
+    longitude = models.FloatField(blank=True, null=True, verbose_name='Uzunlik')
     is_active = models.BooleanField(default=True, verbose_name='Faol')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan vaqt')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan vaqt')
