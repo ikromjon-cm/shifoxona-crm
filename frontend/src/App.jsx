@@ -33,6 +33,8 @@ import PharmacyCatalogPage from '@/pages/pharmacy/PharmacyCatalogPage'
 import CartPage from '@/pages/pharmacy/CartPage'
 import PharmacyOrderDetailPage from '@/pages/pharmacy/PharmacyOrderDetailPage'
 import PharmacyNotificationsPage from '@/pages/pharmacy/PharmacyNotificationsPage'
+import PharmacyProfilePage from '@/pages/pharmacy/PharmacyProfilePage'
+import PharmacyOrdersPage from '@/pages/pharmacy/PharmacyOrdersPage'
 
 export default function App() {
   return (
@@ -115,7 +117,9 @@ export default function App() {
               <Route path="dashboard" element={<PharmacyDashboardPage />} />
               <Route path="catalog" element={<PharmacyCatalogPage />} />
               <Route path="cart" element={<CartPage />} />
+              <Route path="orders" element={<PharmacyOrdersPage />} />
               <Route path="orders/:id" element={<PharmacyOrderDetailPage />} />
+              <Route path="profile" element={<PharmacyProfilePage />} />
               <Route path="notifications" element={<PharmacyNotificationsPage />} />
             </Route>
 

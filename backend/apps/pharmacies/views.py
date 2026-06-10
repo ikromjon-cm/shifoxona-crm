@@ -1,8 +1,9 @@
-from rest_framework import viewsets, filters, status, generics, permissions
+from rest_framework import viewsets, filters, status, generics, permissions, parsers
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from .models import Pharmacy, PharmacyProduct
 from .serializers import (
     PharmacySerializer, PharmacyDetailSerializer,
@@ -96,7 +97,6 @@ class PharmacyApprovalView(generics.GenericAPIView):
         approve = serializer.validated_data.get('approve', True)
         if approve:
             pharmacy.is_approved = True
-            from django.utils import timezone
             pharmacy.approved_at = timezone.now()
             if pharmacy.user:
                 pharmacy.user.is_active = True
@@ -107,3 +107,26 @@ class PharmacyApprovalView(generics.GenericAPIView):
             pharmacy.is_approved = False
             pharmacy.save()
             return Response({'message': 'Dorixona rad etildi', 'pharmacy': PharmacySerializer(pharmacy).data})
+
+
+class PharmacyProfileView(generics.GenericAPIView):
+    serializer_class = PharmacySerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+
+    def get(self, request):
+        try:
+            pharmacy = Pharmacy.objects.get(user=request.user)
+        except Pharmacy.DoesNotExist:
+            return Response({'error': 'Dorixona topilmadi'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(PharmacySerializer(pharmacy).data)
+
+    def patch(self, request):
+        try:
+            pharmacy = Pharmacy.objects.get(user=request.user)
+        except Pharmacy.DoesNotExist:
+            return Response({'error': 'Dorixona topilmadi'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(pharmacy, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

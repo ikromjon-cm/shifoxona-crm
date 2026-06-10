@@ -224,6 +224,24 @@ class DashboardView(generics.GenericAPIView):
             count=models.Count('id')
         ).order_by('month')
 
+        from apps.orders.models import Order
+        today = timezone.now().date()
+        today_orders = Order.objects.filter(created_at__date=today).count()
+        pending_orders = Order.objects.filter(status='pending').count()
+        delivered_orders = Order.objects.filter(status='delivered').count()
+        received_orders = Order.objects.filter(status='received').count()
+
+        top_pharmacies = Order.objects.values(
+            'pharmacy__name', 'pharmacy__id'
+        ).annotate(
+            total_orders=models.Count('id'),
+            total_amount=models.Sum('total_amount')
+        ).order_by('-total_orders')[:10]
+
+        pharmacy_locations = Pharmacy.objects.filter(
+            is_active=True, latitude__isnull=False, longitude__isnull=False
+        ).values('id', 'name', 'latitude', 'longitude', 'address', 'phone')
+
         return Response({
             'total_medicines': total_medicines,
             'total_quantity': total_quantity,
@@ -235,4 +253,11 @@ class DashboardView(generics.GenericAPIView):
             'top_medicines': list(top_medicines),
             'monthly_income': list(monthly_income),
             'monthly_expense': list(monthly_expense),
+            'total_pharmacies_active': Pharmacy.objects.filter(is_active=True, is_approved=True).count(),
+            'today_orders': today_orders,
+            'pending_orders': pending_orders,
+            'delivered_orders': delivered_orders,
+            'received_orders': received_orders,
+            'top_pharmacies': list(top_pharmacies),
+            'pharmacy_locations': list(pharmacy_locations),
         })

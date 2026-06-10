@@ -5,14 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { DataTable } from '@/components/ui/DataTable'
 import {
   Pill, Package, TrendingUp, TrendingDown,
-  AlertTriangle, Building2, Clock
+  AlertTriangle, Building2, Clock, ShoppingCart,
+  Store, MapPin, CheckCircle
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell
 } from 'recharts'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import L from 'leaflet'
 
 const COLORS = ['#1A73E8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+
+const pharmacyIcon = new L.DivIcon({
+  html: '<div style="background:#1A73E8;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)">🏪</div>',
+  className: '',
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32],
+})
 
 export default function DashboardPage() {
   const [data, setData] = useState(null)
@@ -107,7 +118,82 @@ export default function DashboardPage() {
           icon={Building2}
           color="violet"
         />
+        <StatCard
+          title="Faol dorixonalar"
+          value={data?.total_pharmacies_active || 0}
+          icon={Store}
+          color="emerald"
+        />
+        <StatCard
+          title="Bugungi buyurtmalar"
+          value={data?.today_orders || 0}
+          icon={ShoppingCart}
+          color="amber"
+        />
+        <StatCard
+          title="Kutilayotgan"
+          value={data?.pending_orders || 0}
+          icon={Clock}
+          color="amber"
+        />
+        <StatCard
+          title="Yetkazilgan"
+          value={data?.delivered_orders || 0}
+          icon={Package}
+          color="medical"
+        />
+        <StatCard
+          title="Qabul qilingan"
+          value={data?.received_orders || 0}
+          icon={CheckCircle}
+          color="emerald"
+        />
       </div>
+
+      {data?.pharmacy_locations?.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle>Dorixonalar xaritasi</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-[400px] rounded-lg overflow-hidden">
+              <MapContainer
+                center={[41.3, 69.2]}
+                zoom={6}
+                className="h-full w-full"
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {data.pharmacy_locations.map((ph) => (
+                  <Marker
+                    key={ph.id}
+                    position={[ph.latitude, ph.longitude]}
+                    icon={pharmacyIcon}
+                  >
+                    <Popup>
+                      <div className="text-sm">
+                        <strong>{ph.name}</strong><br />
+                        {ph.address && <>{ph.address}<br /></>}
+                        {ph.phone && <>📞 {ph.phone}</>}
+                        <br />
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${ph.latitude},${ph.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-xs"
+                        >
+                          Navigatsiya
+                        </a>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
@@ -191,6 +277,29 @@ export default function DashboardPage() {
           />
         </CardContent>
       </Card>
+
+      {data?.top_pharmacies?.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Eng ko'p buyurtma bergan dorixonalar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={[
+                { key: 'pharmacy__name', label: 'Dorixona nomi' },
+                {
+                  key: 'total_orders', label: 'Buyurtmalar soni',
+                },
+                {
+                  key: 'total_amount', label: 'Jami summa',
+                  render: (row) => Number(row.total_amount).toLocaleString() + ' so\'m'
+                },
+              ]}
+              data={data?.top_pharmacies || []}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

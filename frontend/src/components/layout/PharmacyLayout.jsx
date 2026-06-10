@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, NavLink } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { notificationsAPI } from '@/services/api'
-import { Store, Package, ShoppingCart, LogOut, Menu, X, LayoutDashboard, Bell } from 'lucide-react'
+import { Store, Package, ShoppingCart, LogOut, Menu, X, LayoutDashboard, Bell, ClipboardList, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: '/pharmacy/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/pharmacy/catalog', icon: Package, label: 'Katalog' },
   { to: '/pharmacy/cart', icon: ShoppingCart, label: 'Savatcha' },
+  { to: '/pharmacy/orders', icon: ClipboardList, label: 'Buyurtmalarim' },
+  { to: '/pharmacy/profile', icon: User, label: 'Profil' },
 ]
 
 export default function PharmacyLayout() {

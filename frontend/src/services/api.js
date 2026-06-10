@@ -121,6 +121,8 @@ export const pharmaciesAPI = {
   register: (data) => api.post('/pharmacies/register/', data),
   login: (data) => api.post('/pharmacies/login/', data),
   approve: (id, data) => api.post(`/pharmacies/approve/${id}/`, data),
+  getProfile: () => api.get('/pharmacies/profile/'),
+  updateProfile: (data) => api.patch('/pharmacies/profile/', data),
 }
 
 export const ordersAPI = {

@@ -10,5 +10,6 @@ urlpatterns = [
     path('register/', views.PharmacyRegisterView.as_view(), name='pharmacy-register'),
     path('login/', views.PharmacyLoginView.as_view(), name='pharmacy-login'),
     path('approve/<int:pk>/', views.PharmacyApprovalView.as_view(), name='pharmacy-approve'),
+    path('profile/', views.PharmacyProfileView.as_view(), name='pharmacy-profile'),
     path('', include(router.urls)),
 ]
