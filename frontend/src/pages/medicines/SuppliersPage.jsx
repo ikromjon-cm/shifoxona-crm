@@ -137,8 +137,8 @@ export default function SuppliersPage() {
           <RegionDistrictPicker
             region={form.region}
             district={form.district}
-            onRegionChange={(v) => setForm({ ...form, region: v })}
-            onDistrictChange={(v) => setForm({ ...form, district: v })}
+            onRegionChange={(v) => setForm(prev => ({ ...prev, region: v }))}
+            onDistrictChange={(v) => setForm(prev => ({ ...prev, district: v }))}
           />
           <div>
             <label className="text-sm font-medium mb-1 block">Manzil (ko'cha, uy)</label>

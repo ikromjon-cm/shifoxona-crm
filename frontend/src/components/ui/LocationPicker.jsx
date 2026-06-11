@@ -58,7 +58,7 @@ export default function LocationPicker({ position, onLocationSelect }) {
 
   return (
     <div className="space-y-2">
-      <Button type="button" variant="outline" size="sm" onClick={handleLocateMe} loading={locating}>
+      <Button type="button" variant="outline" size="sm" onClick={handleLocateMe} isLoading={locating}>
         <LocateFixed className="h-4 w-4 mr-1" /> Mening joylashuvim
       </Button>
       <div className="h-64 w-full rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 relative">

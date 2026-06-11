@@ -92,7 +92,7 @@ export function DataTable({
                 >
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-3 whitespace-nowrap">
-                      {col.render ? col.render(row) : row[col.key]}
+                      {col.render ? col.render(row) : (row[col.key] ?? '-')}
                     </td>
                   ))}
                 </tr>

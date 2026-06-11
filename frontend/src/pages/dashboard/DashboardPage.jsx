@@ -90,13 +90,13 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Bugungi kirim"
-          value={data?.today_income || 0}
+          value={Number(data?.today_income || 0).toLocaleString() + ' so\'m'}
           icon={TrendingUp}
           color="amber"
         />
         <StatCard
           title="Bugungi chiqim"
-          value={data?.today_expense || 0}
+          value={Number(data?.today_expense || 0).toLocaleString() + ' so\'m'}
           icon={TrendingDown}
           color="rose"
         />

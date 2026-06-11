@@ -189,8 +189,13 @@ class DashboardView(generics.GenericAPIView):
     def get(self, request):
         total_medicines = Medicine.objects.count()
         total_quantity = Medicine.objects.aggregate(models.Sum('quantity'))['quantity__sum'] or 0
-        today_income = IncomeTransaction.objects.filter(created_at__date=timezone.now().date()).count()
-        today_expense = ExpenseTransaction.objects.filter(created_at__date=timezone.now().date()).count()
+        today = timezone.now().date()
+        today_income = IncomeTransaction.objects.filter(
+            created_at__date=today
+        ).aggregate(total=models.Sum('total_amount'))['total'] or 0
+        today_expense = ExpenseTransaction.objects.filter(
+            created_at__date=today
+        ).aggregate(total=models.Sum('total_amount'))['total'] or 0
         low_stock = Medicine.objects.filter(quantity__lte=models.F('min_quantity')).count()
         total_pharmacies = Pharmacy.objects.filter(is_active=True).count()
 
@@ -225,7 +230,6 @@ class DashboardView(generics.GenericAPIView):
         ).order_by('month')
 
         from apps.orders.models import Order
-        today = timezone.now().date()
         today_orders = Order.objects.filter(created_at__date=today).count()
         pending_orders = Order.objects.filter(status='pending').count()
         delivered_orders = Order.objects.filter(status='delivered').count()

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { medicinesAPI, categoriesAPI, suppliersAPI, batchesAPI } from '@/services/api'
 import { DataTable } from '@/components/ui/DataTable'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -23,6 +23,8 @@ export default function MedicinesPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const searchTimer = useRef(null)
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [form, setForm] = useState({
@@ -32,14 +34,23 @@ export default function MedicinesPage() {
   })
 
   useEffect(() => {
+    clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => setDebouncedSearch(search), 400)
+    return () => clearTimeout(searchTimer.current)
+  }, [search])
+
+  useEffect(() => {
     fetchMedicines()
+  }, [page, debouncedSearch])
+
+  useEffect(() => {
     fetchCategories()
     fetchSuppliers()
-  }, [page, search])
+  }, [])
 
   const fetchMedicines = async () => {
     try {
-      const params = { page, search }
+      const params = { page, search: debouncedSearch }
       const res = await medicinesAPI.list(params)
       setMedicines(res.data.results || res.data)
       setTotalPages(Math.ceil((res.data.count || 0) / 20) || 1)
