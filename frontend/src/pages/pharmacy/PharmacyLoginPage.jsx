@@ -26,7 +26,8 @@ export default function PharmacyLoginPage() {
       toast.success('Xush kelibsiz!')
       navigate('/pharmacy/dashboard')
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Login yoki parol noto\'g\'ri')
+      const d = err.response?.data
+      toast.error(d?.non_field_errors?.[0] || d?.detail || 'Login yoki parol noto\'g\'ri')
     } finally { setLoading(false) }
   }
 

@@ -87,7 +87,7 @@ class UserBlockView(APIView):
     def post(self, request, pk):
         try:
             user = User.objects.get(pk=pk)
-            if user.is_superadmin:
+            if user.is_super_admin:
                 return Response({'error': 'Super Adminni bloklab bo\'lmaydi'}, status=status.HTTP_400_BAD_REQUEST)
             user.block()
             return Response({'message': 'Foydalanuvchi bloklandi'})

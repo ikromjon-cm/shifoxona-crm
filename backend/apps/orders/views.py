@@ -162,7 +162,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 order.order_number,
                 order.pharmacy.name if order.pharmacy else '-',
                 status_labels.get(order.status, order.status),
-                order.total_items,
+                sum(item.quantity for item in order.items.all()),
                 float(order.total_amount),
                 order.note or '',
                 order.created_at.strftime('%d.%m.%Y %H:%M') if order.created_at else '',

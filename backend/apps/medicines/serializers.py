@@ -53,3 +53,9 @@ class MedicineCreateSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'category', 'supplier', 'series_number', 'barcode',
                   'purchase_price', 'selling_price', 'quantity', 'min_quantity',
                   'image', 'description', 'is_active']
+
+    def validate_barcode(self, value):
+        if not value:
+            import uuid
+            return uuid.uuid4().hex[:12].upper()
+        return value

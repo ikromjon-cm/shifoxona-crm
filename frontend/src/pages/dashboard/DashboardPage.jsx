@@ -54,8 +54,8 @@ export default function DashboardPage() {
 
   const monthlyChartData = Array.from({ length: 12 }, (_, i) => {
     const month = i + 1
-    const income = data?.monthly_income?.find(m => m.month == month)
-    const expense = data?.monthly_expense?.find(m => m.month == month)
+    const income = data?.monthly_income?.find(m => new Date(m.month).getMonth() + 1 === month)
+    const expense = data?.monthly_expense?.find(m => new Date(m.month).getMonth() + 1 === month)
     return {
       name: `${month}-oy`,
       kirim: income?.total ? Number(income.total) : 0,

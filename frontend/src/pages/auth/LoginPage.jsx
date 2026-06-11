@@ -27,7 +27,8 @@ export default function LoginPage() {
       toast.success('Muvaffaqiyatli tizimga kirdingiz')
       navigate('/')
     } catch (error) {
-      const msg = error.response?.data?.detail || 'Login yoki parol noto\'g\'ri'
+      const data = error.response?.data
+      const msg = data?.non_field_errors?.[0] || data?.detail || 'Login yoki parol noto\'g\'ri'
       toast.error(msg)
     } finally {
       setLoading(false)
