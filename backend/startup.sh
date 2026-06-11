@@ -1,9 +1,6 @@
 #!/bin/bash
 set -e
 
-export DATABASE_URL="postgresql://neondb_owner:npg_Jlkj36WbpVPr@ep-royal-silence-abmtlvjg.eu-west-2.aws.neon.tech/neondb?sslmode=require"
-export DEBUG=False
-
 mkdir -p staticfiles media logs
 
 python manage.py migrate --noinput || true
