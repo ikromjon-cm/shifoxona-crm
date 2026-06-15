@@ -1,13 +1,14 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, Inbox } from 'lucide-react'
 import Button from './Button'
 import Input from './Input'
+import { cn } from '@/lib/utils'
 
 function SkeletonRow({ columns }) {
   return (
     <tr className="animate-pulse">
       {columns.map((col, i) => (
         <td key={i} className="px-4 py-3">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+          <div className="h-4 bg-gray-100 dark:bg-gray-700/50 rounded w-3/4" />
         </td>
       ))}
     </tr>
@@ -29,19 +30,19 @@ export function DataTable({
   if (loading) {
     return (
       <div className="space-y-4">
-        {searchable && <div className="h-10 w-72 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />}
-        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        {searchable && <div className="h-10 w-72 bg-gray-100 dark:bg-gray-700/50 rounded-xl animate-pulse" />}
+        <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700/50">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-medical-500 text-white">
+              <tr className="bg-gradient-to-r from-medical-500 to-brand-500 text-white">
                 {columns.map((col) => (
-                  <th key={col.key} className="px-4 py-3 text-left font-medium whitespace-nowrap">
+                  <th key={col.key} className="px-4 py-3.5 text-left font-medium whitespace-nowrap text-[13px]">
                     {col.label}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-700/30 bg-white dark:bg-gray-800/50">
               {[1, 2, 3, 4, 5].map((i) => (
                 <SkeletonRow key={i} columns={columns} />
               ))}
@@ -56,42 +57,51 @@ export function DataTable({
     <div className="space-y-4">
       {searchable && (
         <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            className="pl-10"
+            className="pl-10 rounded-xl"
             placeholder="Qidirish..."
             onChange={(e) => onSearch?.(e.target.value)}
           />
         </div>
       )}
-      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-medical-500 text-white">
+            <tr className="bg-gradient-to-r from-medical-500 to-brand-500 text-white">
               {columns.map((col) => (
-                <th key={col.key} className="px-4 py-3 text-left font-medium whitespace-nowrap">
+                <th key={col.key} className="px-4 py-3.5 text-left font-medium whitespace-nowrap text-[13px]">
                   {col.label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="divide-y divide-gray-50 dark:divide-gray-700/30 bg-white dark:bg-gray-800/50">
             {data.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-12 text-center">
-                  <Inbox className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">{emptyMessage}</p>
+                  <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-gray-700/50 flex items-center justify-center mx-auto mb-3">
+                    <Inbox className="h-7 w-7 text-gray-300 dark:text-gray-600" />
+                  </div>
+                  <p className="text-sm text-gray-400">{emptyMessage}</p>
                 </td>
               </tr>
             ) : (
               data.map((row, i) => (
                 <tr
                   key={row.id || i}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   onClick={() => onRowClick?.(row)}
+                  className={cn(
+                    'transition-all duration-150',
+                    onRowClick ? 'cursor-pointer' : '',
+                    i % 2 === 0
+                      ? 'bg-white dark:bg-gray-800/30'
+                      : 'bg-gray-50/50 dark:bg-gray-800/10',
+                    'hover:bg-medical-50/50 dark:hover:bg-medical-900/10'
+                  )}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3 whitespace-nowrap">
+                    <td key={col.key} className="px-4 py-3.5 whitespace-nowrap text-gray-700 dark:text-gray-300">
                       {col.render ? col.render(row) : (row[col.key] ?? '-')}
                     </td>
                   ))}
@@ -111,7 +121,7 @@ export function DataTable({
             <Button variant="outline" size="sm" onClick={() => onPageChange?.(page - 1)} disabled={page === 1}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="px-2 text-sm font-medium">{page}</span>
+            <span className="px-3 py-1 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-lg">{page}</span>
             <Button variant="outline" size="sm" onClick={() => onPageChange?.(page + 1)} disabled={page === totalPages}>
               <ChevronRight className="h-4 w-4" />
             </Button>

@@ -1,10 +1,17 @@
 import { cn } from '@/lib/utils'
 
-export function Card({ className, children, ...props }) {
+export function Card({ className, children, variant = 'default', ...props }) {
+  const variants = {
+    default: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm',
+    glass: 'bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-100/50 dark:border-gray-700/30 shadow-xl shadow-black/5',
+    gradient: 'bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-850 border border-gray-200 dark:border-gray-700 shadow-sm',
+  }
+
   return (
     <div
       className={cn(
-        'rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm',
+        'rounded-2xl transition-all duration-300',
+        variants[variant],
         className
       )}
       {...props}
@@ -24,7 +31,7 @@ export function CardHeader({ className, children, ...props }) {
 
 export function CardTitle({ className, children, ...props }) {
   return (
-    <h3 className={cn('text-xl font-semibold leading-none tracking-tight', className)} {...props}>
+    <h3 className={cn('text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-white', className)} {...props}>
       {children}
     </h3>
   )

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { reportsAPI } from '@/services/api'
 import StatCard from '@/components/ui/StatCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -6,34 +6,59 @@ import { DataTable } from '@/components/ui/DataTable'
 import {
   Pill, Package, TrendingUp, TrendingDown,
   AlertTriangle, Building2, Clock, ShoppingCart,
-  Store, MapPin, CheckCircle
+  Store, MapPin, CheckCircle, Activity,
+  ChevronRight, RefreshCw
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell
+  ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell,
+  AreaChart, Area
 } from 'recharts'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
+import { cn } from '@/lib/utils'
 
-const COLORS = ['#1A73E8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4']
+
+const CustomTooltip = ({ active, payload, label, formatter }) => {
+  if (!active || !payload) return null
+  return (
+    <div className="chart-tooltip">
+      <p className="font-semibold text-gray-900 dark:text-white mb-1">{label}</p>
+      {payload.map((entry, i) => (
+        <div key={i} className="flex items-center gap-2 text-sm">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+          <span className="text-gray-500">{entry.name}:</span>
+          <span className="font-medium text-gray-900 dark:text-white">
+            {formatter ? formatter(entry.value) : entry.value.toLocaleString()}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 const pharmacyIcon = new L.DivIcon({
-  html: '<div style="background:#1A73E8;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)">🏪</div>',
+  html: '<div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);color:white;border-radius:12px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 4px 12px rgba(79,70,229,0.4)">🏪</div>',
   className: '',
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32],
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
 })
+
+const GradientBar = (props) => {
+  const { fill, ...rest } = props
+  return <Bar {...rest} fill={fill} />
+}
 
 export default function DashboardPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    fetchDashboard()
-  }, [])
-
-  const fetchDashboard = async () => {
+  const fetchDashboard = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
+    else setRefreshing(true)
     try {
       const res = await reportsAPI.dashboard()
       setData(res.data)
@@ -41,16 +66,11 @@ export default function DashboardPage() {
       console.error('Dashboard error:', err)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
-  }
+  }, [])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-medical-500"></div>
-      </div>
-    )
-  }
+  useEffect(() => { fetchDashboard() }, [])
 
   const monthlyChartData = Array.from({ length: 12 }, (_, i) => {
     const month = i + 1
@@ -68,238 +88,260 @@ export default function DashboardPage() {
     value: m.total_qty,
   })) || []
 
+  const statCards = [
+    { title: 'Jami mahsulotlar', value: data?.total_medicines || 0, icon: Package, color: 'medical', key: 'medicines' },
+    { title: 'Ombordagi soni', value: data?.total_quantity || 0, icon: Pill, color: 'emerald', key: 'quantity' },
+    { title: 'Bugungi kirim', value: (data?.today_income || 0).toLocaleString() + " so'm", icon: TrendingUp, color: 'amber', key: 'income' },
+    { title: 'Bugungi chiqim', value: (data?.today_expense || 0).toLocaleString() + " so'm", icon: TrendingDown, color: 'rose', key: 'expense' },
+    { title: 'Kam qoldiq', value: data?.low_stock || 0, icon: AlertTriangle, color: 'rose', key: 'lowstock' },
+    { title: 'Muddati yaqin', value: data?.expiring_soon || 0, icon: Clock, color: 'amber', key: 'expiring' },
+    { title: 'Dorixonalar', value: data?.total_pharmacies || 0, icon: Building2, color: 'violet', key: 'pharmacies' },
+    { title: 'Faol dorixonalar', value: data?.total_pharmacies_active || 0, icon: Store, color: 'emerald', key: 'active' },
+    { title: 'Bugungi buyurtmalar', value: data?.today_orders || 0, icon: ShoppingCart, color: 'amber', key: 'todayorders' },
+    { title: 'Kutilayotgan', value: data?.pending_orders || 0, icon: Clock, color: 'rose', key: 'pending' },
+    { title: 'Yetkazilgan', value: data?.delivered_orders || 0, icon: Package, color: 'medical', key: 'delivered' },
+    { title: 'Qabul qilingan', value: data?.received_orders || 0, icon: CheckCircle, color: 'emerald', key: 'received' },
+  ]
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="relative mx-auto w-16 h-16 mb-4">
+            <div className="absolute inset-0 rounded-full border-4 border-medical-200 dark:border-medical-900" />
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-medical-500 animate-spin" />
+          </div>
+          <p className="text-sm text-gray-500 animate-pulse">Dashboard yuklanmoqda...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Asosiy statistika va ma'lumotlar</p>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold gradient-text">Dashboard</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Asosiy statistika va ma'lumotlar</p>
+        </div>
+        <button
+          onClick={() => fetchDashboard(true)}
+          disabled={refreshing}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all disabled:opacity-50"
+        >
+          <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+          Yangilash
+        </button>
       </div>
 
+      {/* Stat cards grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Jami mahsulotlar"
-          value={data?.total_medicines || 0}
-          icon={Package}
-          color="medical"
-        />
-        <StatCard
-          title="Ombordagi soni"
-          value={data?.total_quantity || 0}
-          icon={Pill}
-          color="emerald"
-        />
-        <StatCard
-          title="Bugungi kirim"
-          value={Number(data?.today_income || 0).toLocaleString() + ' so\'m'}
-          icon={TrendingUp}
-          color="amber"
-        />
-        <StatCard
-          title="Bugungi chiqim"
-          value={Number(data?.today_expense || 0).toLocaleString() + ' so\'m'}
-          icon={TrendingDown}
-          color="rose"
-        />
-        <StatCard
-          title="Kam qoldiq"
-          value={data?.low_stock || 0}
-          icon={AlertTriangle}
-          color="rose"
-        />
-        <StatCard
-          title="Muddati yaqin"
-          value={data?.expiring_soon || 0}
-          icon={Clock}
-          color="amber"
-        />
-        <StatCard
-          title="Dorixonalar"
-          value={data?.total_pharmacies || 0}
-          icon={Building2}
-          color="violet"
-        />
-        <StatCard
-          title="Faol dorixonalar"
-          value={data?.total_pharmacies_active || 0}
-          icon={Store}
-          color="emerald"
-        />
-        <StatCard
-          title="Bugungi buyurtmalar"
-          value={data?.today_orders || 0}
-          icon={ShoppingCart}
-          color="amber"
-        />
-        <StatCard
-          title="Kutilayotgan"
-          value={data?.pending_orders || 0}
-          icon={Clock}
-          color="amber"
-        />
-        <StatCard
-          title="Yetkazilgan"
-          value={data?.delivered_orders || 0}
-          icon={Package}
-          color="medical"
-        />
-        <StatCard
-          title="Qabul qilingan"
-          value={data?.received_orders || 0}
-          icon={CheckCircle}
-          color="emerald"
-        />
+        {statCards.map((card, i) => (
+          <StatCard key={card.key} {...card} index={i} />
+        ))}
       </div>
 
+      {/* Map */}
       {data?.pharmacy_locations?.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>Dorixonalar xaritasi</CardTitle></CardHeader>
-          <CardContent>
-            <div className="h-[400px] rounded-lg overflow-hidden">
-              <MapContainer
-                center={[41.3, 69.2]}
-                zoom={6}
-                className="h-full w-full"
-                scrollWheelZoom={true}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                {data.pharmacy_locations.map((ph) => (
-                  <Marker
-                    key={ph.id}
-                    position={[ph.latitude, ph.longitude]}
-                    icon={pharmacyIcon}
-                  >
-                    <Popup>
-                      <div className="text-sm">
-                        <strong>{ph.name}</strong><br />
-                        {ph.address && <>{ph.address}<br /></>}
-                        {ph.phone && <>📞 {ph.phone}</>}
-                        <br />
-                        <a
-                          href={`https://www.google.com/maps/dir/?api=1&destination=${ph.latitude},${ph.longitude}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline text-xs"
-                        >
-                          Navigatsiya
-                        </a>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <div
+          className="animate-fade-in"
+          style={{ animationDelay: '0.7s', animationFillMode: 'both' }}
+        >
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-medical-500" />
+                  Dorixonalar xaritasi
+                </CardTitle>
+                <span className="text-xs text-gray-400">{data.pharmacy_locations.length} ta dorixona</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px] rounded-xl overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700">
+                <MapContainer center={[41.3, 69.2]} zoom={6} className="h-full w-full" scrollWheelZoom={true}>
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  {data.pharmacy_locations.map((ph) => (
+                    <Marker key={ph.id} position={[ph.latitude, ph.longitude]} icon={pharmacyIcon}>
+                      <Popup>
+                        <div className="text-sm min-w-[150px]">
+                          <p className="font-semibold text-gray-900">{ph.name}</p>
+                          {ph.address && <p className="text-xs text-gray-500 mt-0.5">{ph.address}</p>}
+                          {ph.phone && <p className="text-xs text-gray-500 mt-0.5">📞 {ph.phone}</p>}
+                          <a
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${ph.latitude},${ph.longitude}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-medical-500 hover:text-medical-600"
+                          >
+                            Navigatsiya <ChevronRight className="h-3 w-3" />
+                          </a>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Charts row */}
+      <div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        style={{ animation: 'fadeIn 0.5s ease-out 0.8s both' }}
+      >
+        {/* Bar Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Oylik kirim/chiqim</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Activity className="h-4 w-4 text-medical-500" />
+              Oylik kirim/chiqim
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={monthlyChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" fontSize={12} />
-                <YAxis fontSize={12} />
-                <Tooltip />
-                <Bar dataKey="kirim" fill="#1A73E8" radius={[4, 4, 0, 0]} name="Kirim" />
-                <Bar dataKey="chiqim" fill="#10b981" radius={[4, 4, 0, 0]} name="Chiqim" />
+                <defs>
+                  <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#4F46E5" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#4F46E5" stopOpacity={0.3} />
+                  </linearGradient>
+                  <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10B981" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#10B981" stopOpacity={0.3} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:opacity-20" />
+                <XAxis dataKey="name" fontSize={11} tickMargin={8} axisLine={false} tickLine={false} />
+                <YAxis fontSize={11} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip formatter={(v) => Number(v).toLocaleString() + " so'm"} />} />
+                <Bar dataKey="kirim" fill="url(#incomeGrad)" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="chiqim" fill="url(#expenseGrad)" radius={[6, 6, 0, 0]} maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
+        {/* Pie Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Eng ko'p tarqatilgan mahsulotlar</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Pie className="h-4 w-4 text-brand-500" />
+              Eng ko'p tarqatilgan mahsulotlar
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
+                <defs>
+                  {COLORS.map((c, i) => (
+                    <linearGradient key={i} id={`pieGrad${i}`} x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={c} stopOpacity={0.9} />
+                      <stop offset="100%" stopColor={c} stopOpacity={0.5} />
+                    </linearGradient>
+                  ))}
+                </defs>
                 <Pie
                   data={topMedicinesData.slice(0, 5)}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  cx="50%" cy="50%"
+                  innerRadius={60}
                   outerRadius={100}
+                  paddingAngle={4}
+                  cornerRadius={8}
                   dataKey="value"
                 >
                   {topMedicinesData.slice(0, 5).map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    <Cell key={i} fill={`url(#pieGrad${i})`} stroke={COLORS[i]} strokeWidth={2} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
+        {/* Area Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Oylik trend (kirim)</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+              Oylik trend
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={monthlyChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" fontSize={12} />
-                <YAxis fontSize={12} />
-                <Tooltip />
-                <Line type="monotone" dataKey="kirim" stroke="#1A73E8" strokeWidth={2} dot={{ fill: '#1A73E8' }} name="Kirim" />
-                <Line type="monotone" dataKey="chiqim" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981' }} name="Chiqim" />
-              </LineChart>
+              <AreaChart data={monthlyChartData}>
+                <defs>
+                  <linearGradient id="trendIncome" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#4F46E5" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#4F46E5" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="trendExpense" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10B981" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#10B981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:opacity-20" />
+                <XAxis dataKey="name" fontSize={11} tickMargin={8} axisLine={false} tickLine={false} />
+                <YAxis fontSize={11} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip formatter={(v) => Number(v).toLocaleString() + " so'm"} />} />
+                <Area type="monotone" dataKey="kirim" stroke="#4F46E5" strokeWidth={2.5} fill="url(#trendIncome)" dot={{ fill: '#4F46E5', strokeWidth: 2, r: 4 }} />
+                <Area type="monotone" dataKey="chiqim" stroke="#10B981" strokeWidth={2.5} fill="url(#trendExpense)" dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }} />
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Eng ko'p tarqatilgan mahsulotlar ro'yxati</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={[
-              { key: 'medicine__name', label: 'Mahsulot nomi' },
-              { key: 'total_qty', label: 'Jami miqdor' },
-              {
-                key: 'total_amount', label: 'Jami summa',
-                render: (row) => Number(row.total_amount).toLocaleString() + ' so\'m'
-              },
-            ]}
-            data={data?.top_medicines || []}
-          />
-        </CardContent>
-      </Card>
-
-      {data?.top_pharmacies?.length > 0 && (
+      {/* Tables row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Eng ko'p buyurtma bergan dorixonalar</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Package className="h-4 w-4 text-medical-500" />
+              Eng ko'p tarqatilgan mahsulotlar
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <DataTable
               columns={[
-                { key: 'pharmacy__name', label: 'Dorixona nomi' },
-                {
-                  key: 'total_orders', label: 'Buyurtmalar soni',
-                },
-                {
-                  key: 'total_amount', label: 'Jami summa',
-                  render: (row) => Number(row.total_amount).toLocaleString() + ' so\'m'
-                },
+                { key: 'medicine__name', label: 'Mahsulot nomi' },
+                { key: 'total_qty', label: 'Miqdor' },
+                { key: 'total_amount', label: 'Summa', render: (row) => Number(row.total_amount).toLocaleString() + " so'm" },
               ]}
-              data={data?.top_pharmacies || []}
+              data={data?.top_medicines || []}
+              emptyMessage="Ma'lumot topilmadi"
             />
           </CardContent>
         </Card>
-      )}
+
+        {data?.top_pharmacies?.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Store className="h-4 w-4 text-brand-500" />
+                Eng ko'p buyurtma bergan dorixonalar
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DataTable
+                columns={[
+                  { key: 'pharmacy__name', label: 'Dorixona' },
+                  { key: 'total_orders', label: 'Buyurtmalar' },
+                  { key: 'total_amount', label: 'Summa', render: (row) => Number(row.total_amount).toLocaleString() + " so'm" },
+                ]}
+                data={data?.top_pharmacies || []}
+                emptyMessage="Ma'lumot topilmadi"
+              />
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,9 +1,9 @@
-import { Menu, Bell, Moon, Sun, CheckCheck } from 'lucide-react'
+import { Menu, Bell, Moon, Sun, CheckCheck, ChevronRight } from 'lucide-react'
 import { useTheme } from '@/context/ThemeContext'
 import { useNavigate } from 'react-router-dom'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { notificationsAPI } from '@/services/api'
-import { formatDateTime } from '@/lib/utils'
+import { formatDateTime, cn } from '@/lib/utils'
 
 export default function Header({ onMenuClick }) {
   const { darkMode, toggleDarkMode } = useTheme()
@@ -13,24 +13,22 @@ export default function Header({ onMenuClick }) {
   const [showDropdown, setShowDropdown] = useState(false)
   const dropdownRef = useRef(null)
 
-  useEffect(() => {
-    const fetchUnread = async () => {
-      try {
-        const res = await notificationsAPI.unreadCount()
-        setUnreadCount(res.data.count)
-      } catch {}
-    }
-    const fetchRecent = async () => {
-      try {
-        const res = await notificationsAPI.list({ page: 1 })
-        setNotifications(res.data.results || res.data)
-      } catch {}
-    }
-    fetchUnread()
-    fetchRecent()
-    const interval = setInterval(() => { fetchUnread(); fetchRecent() }, 30000)
-    return () => clearInterval(interval)
+  const fetchData = useCallback(async () => {
+    try {
+      const [unreadRes, notifRes] = await Promise.all([
+        notificationsAPI.unreadCount(),
+        notificationsAPI.list({ page: 1 }),
+      ])
+      setUnreadCount(unreadRes.data.count)
+      setNotifications(notifRes.data.results || notifRes.data)
+    } catch {}
   }, [])
+
+  useEffect(() => {
+    fetchData()
+    const interval = setInterval(fetchData, 30000)
+    return () => clearInterval(interval)
+  }, [fetchData])
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -62,80 +60,104 @@ export default function Header({ onMenuClick }) {
   const recentNotifications = notifications.slice(0, 5)
 
   return (
-    <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <header className="sticky top-0 z-30 glass-header">
       <div className="flex items-center justify-between px-4 h-16">
-        <button
-          onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-
-        <div className="hidden lg:flex items-center gap-2 text-sm text-gray-500">
-          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
-          Tizim ishlamoqda
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="hidden lg:flex items-center gap-2.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            </span>
+            <span className="text-sm text-gray-500 font-medium">Tizim ishlamoqda</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Dark mode toggle */}
           <button
             onClick={toggleDarkMode}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all group"
+            title={darkMode ? 'Yorqin rejim' : 'Qorong\'i rejim'}
           >
-            {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            <div className="relative">
+              <Sun className={cn(
+                "h-4.5 w-4.5 transition-all duration-300",
+                darkMode ? "opacity-100 rotate-0" : "opacity-0 rotate-90 absolute inset-0"
+              )} />
+              <Moon className={cn(
+                "h-4.5 w-4.5 transition-all duration-300",
+                darkMode ? "opacity-0 -rotate-90 absolute inset-0" : "opacity-100 rotate-0"
+              )} />
+            </div>
           </button>
 
+          {/* Notifications */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="relative p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all group"
             >
-              <Bell className="h-5 w-5" />
+              <Bell className="h-4.5 w-4.5" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium">
+                <span className="absolute -top-0.5 -right-0.5 h-5 w-5 rounded-full bg-gradient-to-br from-red-500 to-rose-500 text-white text-[10px] flex items-center justify-center font-bold shadow-lg shadow-red-500/30">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-sm font-semibold">Bildirishnomalar</span>
-                  <div className="flex gap-2">
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={handleMarkAllRead}
-                        className="text-xs text-medical-500 hover:underline"
-                      >
-                        Hammasini o'qish
-                      </button>
-                    )}
-                  </div>
+              <div className="absolute right-0 mt-2 w-80 glass rounded-2xl shadow-2xl border border-gray-100/50 dark:border-gray-700/30 overflow-hidden animate-scale-in origin-top-right">
+                <div className="flex items-center justify-between p-4 border-b border-gray-100/50 dark:border-gray-700/30">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">Bildirishnomalar</span>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="text-xs font-medium text-medical-500 hover:text-medical-600 transition-colors"
+                    >
+                      Hammasini o'qish
+                    </button>
+                  )}
                 </div>
-                <div className="max-h-72 overflow-y-auto">
+                <div className="max-h-72 overflow-y-auto scrollbar-thin">
                   {recentNotifications.length === 0 ? (
-                    <div className="p-6 text-center text-sm text-gray-500">
-                      <Bell className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                      Bildirishnomalar mavjud emas
+                    <div className="p-8 text-center">
+                      <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
+                        <Bell className="h-6 w-6 text-gray-300 dark:text-gray-600" />
+                      </div>
+                      <p className="text-sm text-gray-500">Bildirishnomalar mavjud emas</p>
                     </div>
                   ) : (
                     recentNotifications.map((n) => (
                       <div
                         key={n.id}
-                        className={`flex items-start gap-3 p-3 border-b border-gray-100 dark:border-gray-700/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors ${
-                          !n.is_read ? 'bg-medical-50/50 dark:bg-medical-900/10' : ''
-                        }`}
+                        className={cn(
+                          'flex items-start gap-3 p-4 border-b border-gray-50 dark:border-gray-800 cursor-pointer group transition-all',
+                          !n.is_read
+                            ? 'bg-gradient-to-r from-medical-50/50 to-transparent dark:from-medical-900/10'
+                            : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
+                        )}
                         onClick={() => { handleMarkRead(n.id); navigate('/notifications'); setShowDropdown(false) }}
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{n.title}</p>
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                          <p className="text-xs text-gray-400 mt-1">{formatDateTime(n.created_at)}</p>
+                          <div className="flex items-center gap-2">
+                            {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-medical-500 flex-shrink-0" />}
+                            <p className={cn('text-sm truncate', !n.is_read ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300')}>
+                              {n.title}
+                            </p>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 ml-3.5">{n.message}</p>
+                          <p className="text-[11px] text-gray-400 mt-1 ml-3.5">{formatDateTime(n.created_at)}</p>
                         </div>
                         {!n.is_read && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleMarkRead(n.id) }}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                            className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
                           >
                             <CheckCheck className="h-3.5 w-3.5 text-medical-500" />
                           </button>
@@ -145,10 +167,12 @@ export default function Header({ onMenuClick }) {
                   )}
                 </div>
                 <div
-                  className="p-2 text-center border-t border-gray-200 dark:border-gray-700"
+                  className="p-3 text-center border-t border-gray-100/50 dark:border-gray-700/30 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
                   onClick={() => { navigate('/notifications'); setShowDropdown(false) }}
                 >
-                  <span className="text-sm text-medical-500 hover:underline cursor-pointer">Barcha bildirishnomalar</span>
+                  <span className="text-sm font-medium text-medical-500 hover:text-medical-600 inline-flex items-center gap-1">
+                    Barcha bildirishnomalar <ChevronRight className="h-3.5 w-3.5" />
+                  </span>
                 </div>
               </div>
             )}
@@ -158,3 +182,5 @@ export default function Header({ onMenuClick }) {
     </header>
   )
 }
+
+

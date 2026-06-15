@@ -4,7 +4,8 @@ import { useAuth } from '@/context/AuthContext'
 import {
   LayoutDashboard, Pill, Warehouse, Building2, Package,
   FileText, Bell, Shield, Users, Menu, X, LogOut,
-  TrendingUp, TrendingDown, Settings, Truck, CheckSquare
+  TrendingUp, TrendingDown, Settings, Truck, CheckSquare,
+  ChevronRight
 } from 'lucide-react'
 
 const navSections = [
@@ -65,53 +66,58 @@ const adminSection = {
 export default function Sidebar({ isOpen, onClose }) {
   const { isSuperAdmin, user, logout } = useAuth()
 
+  const initials = (user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')
+
   return (
     <>
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden" onClick={onClose} />
       )}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-50 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto flex flex-col',
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          'fixed top-0 left-0 z-50 h-full w-64 glass-sidebar flex flex-col',
+          'transform transition-all duration-300 ease-out lg:translate-x-0 lg:static lg:z-auto',
+          isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         )}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        {/* Logo */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-100/50 dark:border-gray-700/30">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-medical-500 flex items-center justify-center">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-medical-500 to-brand-500 flex items-center justify-center shadow-lg shadow-medical-500/20">
               <Pill className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-gray-900 dark:text-white">Shifoxona CRM</h1>
-              <p className="text-xs text-gray-500">Farmatsevtika tizimi</p>
+              <h1 className="text-sm font-bold bg-gradient-to-r from-medical-600 to-brand-600 dark:from-medical-400 dark:to-brand-400 bg-clip-text text-transparent">
+                Shifoxona CRM
+              </h1>
+              <p className="text-[10px] text-gray-400 font-medium">Farmatsevtika tizimi</p>
             </div>
           </div>
-          <button onClick={onClose} className="lg:hidden p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-            <X className="h-5 w-5" />
+          <button onClick={onClose} className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        {/* User info */}
+        <div className="mx-3 mt-3 p-3 rounded-xl bg-gradient-to-r from-medical-50 to-brand-50 dark:from-medical-900/20 dark:to-brand-900/20 border border-medical-100/50 dark:border-medical-700/20">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-medical-100 dark:bg-medical-900 flex items-center justify-center">
-              <span className="text-sm font-bold text-medical-600 dark:text-medical-300">
-                {user?.first_name?.[0]}{user?.last_name?.[0]}
-              </span>
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-medical-500 to-brand-500 flex items-center justify-center shadow-sm">
+              <span className="text-sm font-bold text-white">{initials || '?'}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.first_name} {user?.last_name}</p>
-              <p className="text-xs text-gray-500 truncate">{user?.role === 'superadmin' ? 'Super Admin' : 'Operator'}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.first_name} {user?.last_name}</p>
+              <p className="text-[11px] text-gray-500 truncate">
+                {user?.role === 'superadmin' ? 'Super Admin' : user?.role === 'operator' ? 'Operator' : user?.role}
+              </p>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-4 overflow-y-auto scrollbar-thin mt-3">
           {navSections.map((section) => (
             <div key={section.label}>
-              <p className="px-3 mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <p className="px-3 mb-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-[0.12em]">
                 {section.label}
               </p>
               <div className="space-y-0.5">
@@ -123,15 +129,23 @@ export default function Sidebar({ isOpen, onClose }) {
                     onClick={onClose}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                        'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
                         isActive
-                          ? 'bg-medical-50 dark:bg-medical-900/50 text-medical-700 dark:text-medical-300'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          ? 'nav-link-active'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       )
                     }
                   >
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
-                    {item.label}
+                    {({ isActive }) => (
+                      <>
+                        <item.icon className={cn(
+                          'h-4.5 w-4.5 flex-shrink-0 transition-all duration-200',
+                          isActive ? 'text-medical-500' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
+                        )} />
+                        <span className="flex-1">{item.label}</span>
+                        {isActive && <ChevronRight className="h-3 w-3 text-medical-500" />}
+                      </>
+                    )}
                   </NavLink>
                 ))}
               </div>
@@ -140,7 +154,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
           {isSuperAdmin && (
             <div>
-              <p className="px-3 mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <p className="px-3 mb-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-[0.12em]">
                 {adminSection.label}
               </p>
               <div className="space-y-0.5">
@@ -151,15 +165,23 @@ export default function Sidebar({ isOpen, onClose }) {
                     onClick={onClose}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                        'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
                         isActive
-                          ? 'bg-medical-50 dark:bg-medical-900/50 text-medical-700 dark:text-medical-300'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          ? 'nav-link-active'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       )
                     }
                   >
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
-                    {item.label}
+                    {({ isActive }) => (
+                      <>
+                        <item.icon className={cn(
+                          'h-4.5 w-4.5 flex-shrink-0 transition-all duration-200',
+                          isActive ? 'text-medical-500' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
+                        )} />
+                        <span className="flex-1">{item.label}</span>
+                        {isActive && <ChevronRight className="h-3 w-3 text-medical-500" />}
+                      </>
+                    )}
                   </NavLink>
                 ))}
               </div>
@@ -167,12 +189,13 @@ export default function Sidebar({ isOpen, onClose }) {
           )}
         </nav>
 
-        <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        {/* Logout */}
+        <div className="p-3 border-t border-gray-100/50 dark:border-gray-700/30">
           <button
             onClick={() => logout()}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4.5 w-4.5 transition-transform group-hover:-translate-x-0.5" />
             Chiqish
           </button>
         </div>

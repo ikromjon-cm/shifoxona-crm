@@ -2,29 +2,102 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @layer base {
   body {
     @apply font-sans antialiased;
   }
 }
 
-.sidebar-transition {
-  transition: width 0.3s ease, transform 0.3s ease;
+@layer components {
+  .glass {
+    @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border border-white/20 dark:border-gray-700/30 shadow-lg shadow-black/5;
+  }
+
+  .glass-card {
+    @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-100/50 dark:border-gray-700/30 shadow-xl shadow-black/5;
+  }
+
+  .glass-sidebar {
+    @apply bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-r border-gray-100/50 dark:border-gray-700/30;
+  }
+
+  .glass-header {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100/50 dark:border-gray-700/30;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-medical-500 via-brand-500 to-accent-500;
+  }
+
+  .gradient-border {
+    @apply relative;
+  }
+
+  .gradient-border::before {
+    content: '';
+    @apply absolute inset-0 rounded-xl p-[1px] bg-gradient-to-r from-medical-500 via-brand-500 to-accent-500;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:shadow-brand-500/10;
+  }
+
+  .nav-link-active {
+    @apply bg-gradient-to-r from-medical-500/10 to-brand-500/10 text-medical-700 dark:text-medical-300 border-r-2 border-medical-500;
+  }
+
+  .chart-tooltip {
+    @apply glass px-3 py-2 rounded-lg text-sm shadow-xl;
+  }
+
+  .stat-glow {
+    animation: statGlow 2s ease-in-out infinite alternate;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.300') transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.gray.300');
+    border-radius: 20px;
+  }
+
+  .dark .scrollbar-thin {
+    scrollbar-color: theme('colors.gray.600') transparent;
+  }
+
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.gray.600');
+  }
+
+  .animate-in {
+    animation: fadeIn 0.5s ease-out forwards, slideUp 0.5s ease-out forwards;
+  }
+
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
+  .stagger-5 { animation-delay: 0.5s; }
+  .stagger-6 { animation-delay: 0.6s; }
 }
 
-.card-hover {
-  @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
-}
-
-.table-header {
-  @apply bg-medical-500 text-white font-semibold;
-}
-
-body {
-  margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
-}
-
-.dark body {
-  @apply bg-gray-950 text-gray-100;
+@keyframes statGlow {
+  0% { filter: drop-shadow(0 0 2px rgba(79, 70, 229, 0.1)); }
+  100% { filter: drop-shadow(0 0 8px rgba(79, 70, 229, 0.3)); }
 }
