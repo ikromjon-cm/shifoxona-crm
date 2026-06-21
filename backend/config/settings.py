@@ -27,7 +27,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'drf_spectacular',
-    'drf_yasg',
 
     # Local apps
     'apps.accounts',
@@ -40,6 +39,11 @@ INSTALLED_APPS = [
     'apps.audit_logs',
     'apps.orders.apps.OrdersConfig',
     'apps.delivery.apps.DeliveryConfig',
+    'apps.attendance',
+    'apps.chat',
+    'apps.companies',
+    'apps.rbac',
+    'apps.tasks',
 ]
 
 MIDDLEWARE = [
@@ -78,7 +82,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
     import re
-    from urllib.parse import unquote_plus, urlparse, parse_qs
+    from urllib.parse import unquote_plus, parse_qs
     m = re.match(r'postgres(?:ql)?://(.+?):(.+?)@(.+?)(?::(\d+))?/(.+?)$', DATABASE_URL)
     if m:
         host = m.group(3)
@@ -178,6 +182,15 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Shifoxona farmatsevtika mahsulotlarini boshqarish tizimi',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'ENUM_NAME_OVERRIDES': {
+        'OrderStatusEnum': 'apps.orders.models.Order.STATUS_CHOICES',
+        'DeliveryStatusEnum': 'apps.delivery.models.Delivery.STATUS_CHOICES',
+        'AttendanceStatusEnum': 'apps.attendance.models.AttendanceRecord.STATUS_CHOICES',
+        'TaskStatusEnum': 'apps.tasks.models.Task.STATUS_CHOICES',
+        'PickWaveStatusEnum': 'apps.warehouse.models.PickWave.WAVE_STATUS',
+        'PickOrderStatusEnum': 'apps.warehouse.models.PickOrder.PICK_STATUS',
+        'PickingStrategyEnum': 'apps.warehouse.models.Warehouse.PICKING_STRATEGIES',
+    },
 }
 
 # Logging
@@ -220,3 +233,26 @@ LOGGING = {
 # File upload
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+
+# APScheduler
+SCHEDULER_CONFIG = {
+    'apscheduler.jobstores.default': {
+        'type': 'django',
+    },
+    'apscheduler.executors.default': {
+        'class': 'apscheduler.executors.pool:ThreadPoolExecutor',
+        'max_workers': 5,
+    },
+    'apscheduler.job_defaults.coalesce': True,
+    'apscheduler.job_defaults.max_instances': 1,
+    'apscheduler.timezone': 'Asia/Tashkent',
+}
+
+# Email
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@shifoxona.uz')

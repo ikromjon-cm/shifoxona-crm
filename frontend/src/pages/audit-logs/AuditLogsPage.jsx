@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { auditLogsAPI } from '@/services/api'
 import { DataTable } from '@/components/ui/DataTable'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -17,6 +18,7 @@ const actionVariants = {
 }
 
 export default function AuditLogsPage() {
+  const { t } = useTranslation()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -28,22 +30,22 @@ export default function AuditLogsPage() {
   }, [])
 
   const columns = [
-    { key: 'user_name', label: 'Foydalanuvchi' },
+    { key: 'user_name', label: t('audit.user') },
     {
-      key: 'action', label: 'Harakat',
+      key: 'action', label: t('audit.action'),
       render: (r) => <Badge variant={actionVariants[r.action] || 'default'}>{r.action}</Badge>,
     },
-    { key: 'description', label: 'Tavsif' },
-    { key: 'model_name', label: 'Model' },
-    { key: 'ip_address', label: 'IP manzil' },
-    { key: 'created_at', label: 'Vaqt', render: (r) => formatDateTime(r.created_at) },
+    { key: 'description', label: t('audit.description') },
+    { key: 'model_name', label: t('audit.model') },
+    { key: 'ip_address', label: t('audit.ip') },
+    { key: 'created_at', label: t('audit.time'), render: (r) => formatDateTime(r.created_at) },
   ]
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Audit log</h1>
-        <p className="text-gray-500 mt-1">Tizimdagi barcha harakatlar kuzatuvi</p>
+        <h1 className="text-2xl font-bold">{t('audit.title')}</h1>
+        <p className="text-gray-500 mt-1">{t('audit.desc')}</p>
       </div>
       <Card><CardContent className="p-6">
         <DataTable columns={columns} data={data} loading={loading} />

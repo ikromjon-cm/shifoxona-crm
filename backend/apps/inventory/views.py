@@ -1,15 +1,18 @@
+from datetime import timedelta
+
 from django.db import models
 from django.utils import timezone
-from datetime import timedelta
-from rest_framework import viewsets, filters
-from rest_framework.response import Response
-from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Inventory, InventoryCount
-from .serializers import InventorySerializer, InventoryCountSerializer
-from apps.accounts.permissions import IsSuperAdmin
+from rest_framework import filters, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from apps.accounts.permissions import IsAdminOrWarehouse
 from apps.medicines.models import MedicineBatch
+
+from .models import Inventory, InventoryCount
+from .serializers import InventoryCountSerializer, InventorySerializer
 
 
 class InventoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -51,7 +54,7 @@ class InventoryViewSet(viewsets.ReadOnlyModelViewSet):
 class InventoryCountViewSet(viewsets.ModelViewSet):
     queryset = InventoryCount.objects.all()
     serializer_class = InventoryCountSerializer
-    permission_classes = [IsSuperAdmin]
+    permission_classes = [IsAdminOrWarehouse]
     ordering_fields = ['-created_at']
 
     def get_queryset(self):

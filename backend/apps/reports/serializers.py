@@ -1,4 +1,6 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+
 from .models import Report
 
 
@@ -9,6 +11,7 @@ class ReportSerializer(serializers.ModelSerializer):
         model = Report
         fields = ['id', 'title', 'report_type', 'file_format', 'file', 'filters', 'created_by', 'created_by_name', 'is_ready', 'created_at']
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_created_by_name(self, obj):
         if obj.created_by:
             return f'{obj.created_by.first_name} {obj.created_by.last_name}'

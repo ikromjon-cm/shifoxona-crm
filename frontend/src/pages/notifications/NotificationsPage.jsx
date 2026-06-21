@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { notificationsAPI } from '@/services/api'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { Bell, CheckCheck, AlertTriangle, TrendingUp, TrendingDown, Info, Package } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
 import toast from 'react-hot-toast'
@@ -27,6 +27,7 @@ const bgColors = {
 }
 
 export default function NotificationsPage() {
+  const { t } = useTranslation()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
@@ -38,7 +39,7 @@ export default function NotificationsPage() {
       const res = await notificationsAPI.list()
       setNotifications(res.data.results || res.data)
     } catch (err) {
-      toast.error('Bildirishnomalarni yuklashda xatolik')
+      toast.error(t('notification.errorLoad'))
     } finally { setLoading(false) }
   }
 
@@ -47,7 +48,7 @@ export default function NotificationsPage() {
       await notificationsAPI.markRead(id)
       fetchNotifications()
     } catch (err) {
-      toast.error('Xatolik yuz berdi')
+      toast.error(t('common.error'))
     }
   }
 
@@ -55,9 +56,9 @@ export default function NotificationsPage() {
     try {
       await notificationsAPI.markAllRead()
       fetchNotifications()
-      toast.success('Barchasi o\'qildi')
+      toast.success(t('notification.markAllRead'))
     } catch (err) {
-      toast.error('Xatolik yuz berdi')
+      toast.error(t('common.error'))
     }
   }
 
@@ -67,12 +68,12 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Bildirishnomalar</h1>
-          <p className="text-gray-500 mt-1">Tizim bildirishnomalari</p>
+          <h1 className="text-2xl font-bold">{t('notification.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('notification.systemNotifications')}</p>
         </div>
         {unreadCount > 0 && (
           <Button variant="outline" onClick={handleMarkAllRead}>
-            <CheckCheck className="h-4 w-4 mr-2" /> Barchasini o'qilgan deb belgilash
+            <CheckCheck className="h-4 w-4 mr-2" /> {t('notification.markAllRead')}
           </Button>
         )}
       </div>
@@ -86,7 +87,7 @@ export default function NotificationsPage() {
           ) : notifications.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Bell className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Bildirishnomalar mavjud emas</p>
+              <p>{t('notification.empty')}</p>
             </div>
           ) : (
             notifications.map((n) => {

@@ -1,11 +1,14 @@
 import { Menu, Bell, Moon, Sun, CheckCheck, ChevronRight } from 'lucide-react'
 import { useTheme } from '@/context/ThemeContext'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { notificationsAPI } from '@/services/api'
 import { formatDateTime, cn } from '@/lib/utils'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 
 export default function Header({ onMenuClick }) {
+  const { t } = useTranslation()
   const { darkMode, toggleDarkMode } = useTheme()
   const navigate = useNavigate()
   const [unreadCount, setUnreadCount] = useState(0)
@@ -74,16 +77,18 @@ export default function Header({ onMenuClick }) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
-            <span className="text-sm text-gray-500 font-medium">Tizim ishlamoqda</span>
+            <span className="text-sm text-gray-500 font-medium">{t('header.running')}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <LanguageSwitcher />
+
           {/* Dark mode toggle */}
           <button
             onClick={toggleDarkMode}
             className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all group"
-            title={darkMode ? 'Yorqin rejim' : 'Qorong\'i rejim'}
+            title={darkMode ? t('theme.light') : t('theme.dark')}
           >
             <div className="relative">
               <Sun className={cn(
@@ -114,13 +119,13 @@ export default function Header({ onMenuClick }) {
             {showDropdown && (
               <div className="absolute right-0 mt-2 w-80 glass rounded-2xl shadow-2xl border border-gray-100/50 dark:border-gray-700/30 overflow-hidden animate-scale-in origin-top-right">
                 <div className="flex items-center justify-between p-4 border-b border-gray-100/50 dark:border-gray-700/30">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">Bildirishnomalar</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{t('notification.title')}</span>
                   {unreadCount > 0 && (
                     <button
                       onClick={handleMarkAllRead}
                       className="text-xs font-medium text-medical-500 hover:text-medical-600 transition-colors"
                     >
-                      Hammasini o'qish
+                      {t('header.markAllRead')}
                     </button>
                   )}
                 </div>
@@ -130,7 +135,7 @@ export default function Header({ onMenuClick }) {
                       <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
                         <Bell className="h-6 w-6 text-gray-300 dark:text-gray-600" />
                       </div>
-                      <p className="text-sm text-gray-500">Bildirishnomalar mavjud emas</p>
+                      <p className="text-sm text-gray-500">{t('header.noNotifications')}</p>
                     </div>
                   ) : (
                     recentNotifications.map((n) => (
@@ -171,7 +176,7 @@ export default function Header({ onMenuClick }) {
                   onClick={() => { navigate('/notifications'); setShowDropdown(false) }}
                 >
                   <span className="text-sm font-medium text-medical-500 hover:text-medical-600 inline-flex items-center gap-1">
-                    Barcha bildirishnomalar <ChevronRight className="h-3.5 w-3.5" />
+                    {t('header.allNotifications')} <ChevronRight className="h-3.5 w-3.5" />
                   </span>
                 </div>
               </div>
@@ -182,5 +187,3 @@ export default function Header({ onMenuClick }) {
     </header>
   )
 }
-
-

@@ -1,8 +1,10 @@
-from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, viewsets
+
+from apps.accounts.permissions import IsSuperAdmin
+
 from .models import AuditLog
 from .serializers import AuditLogSerializer
-from apps.accounts.permissions import IsSuperAdmin
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):

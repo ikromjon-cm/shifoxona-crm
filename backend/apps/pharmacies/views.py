@@ -1,17 +1,27 @@
-from rest_framework import viewsets, filters, status, generics, permissions, parsers
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
+
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from django.utils import timezone
-from .models import Pharmacy, PharmacyProduct
-from .serializers import (
-    PharmacySerializer, PharmacyDetailSerializer,
-    PharmacyProductSerializer, PharmacyRegisterSerializer,
-    PharmacyLoginSerializer, PharmacyApprovalSerializer
-)
+from drf_spectacular.utils import extend_schema
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, generics, parsers, status, viewsets
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+
 from apps.accounts.permissions import IsSuperAdmin, IsSuperAdminOrReadOnly
 from apps.accounts.serializers import get_tokens_for_user
+
+from .models import Pharmacy, PharmacyProduct
+from .serializers import (
+    PharmacyApprovalSerializer,
+    PharmacyDetailSerializer,
+    PharmacyLoginSerializer,
+    PharmacyProductSerializer,
+    PharmacyRegisterSerializer,
+    PharmacySerializer,
+)
 
 User = get_user_model()
 
@@ -130,3 +140,58 @@ class PharmacyProfileView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+@extend_schema(exclude=True)
+class PharmacyDashboardView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    @method_decorator(cache_page(120, key_prefix='pharmacy_dashboard'))
+    def get(self, request):
+        try:
+            pharmacy = Pharmacy.objects.get(user=request.user)
+        except Pharmacy.DoesNotExist:
+            return Response({'error': 'Dorixona topilmadi'}, status=status.HTTP_404_NOT_FOUND)
+
+        from apps.delivery.models import Delivery
+
+        today = timezone.now().date()
+        orders_qs = pharmacy.orders.all()
+
+        total_orders = orders_qs.count()
+        pending_orders = orders_qs.filter(status='pending').count()
+        in_transit = orders_qs.filter(status='shipped').count()
+        delivered_today = orders_qs.filter(status='delivered', created_at__date=today).count()
+        received_today = orders_qs.filter(status='received', created_at__date=today).count()
+        total_items = pharmacy.products.aggregate(total=Sum('quantity'))['total'] or 0
+        low_stock_count = pharmacy.products.filter(quantity__lte=5).count()
+
+        active_deliveries = Delivery.objects.filter(
+            order__pharmacy=pharmacy,
+            status__in=['assigned', 'picked', 'in_transit'],
+        ).select_related('courier').order_by('-created_at')
+
+        delivery_data = []
+        for d in active_deliveries:
+            delivery_data.append({
+                'id': d.id,
+                'order_number': d.order.order_number,
+                'status': d.status,
+                'courier_name': d.courier.get_full_name() if d.courier else None,
+                'courier_phone': d.courier.phone if d.courier else None,
+                'courier_lat': d.courier_lat,
+                'courier_lng': d.courier_lng,
+                'estimated_arrival': None,
+            })
+
+        return Response({
+            'total_orders': total_orders,
+            'pending_orders': pending_orders,
+            'in_transit_orders': in_transit,
+            'delivered_today': delivered_today,
+            'received_today': received_today,
+            'total_products': pharmacy.products.count(),
+            'total_items_in_stock': total_items,
+            'low_stock_count': low_stock_count,
+            'active_deliveries': delivery_data,
+        })

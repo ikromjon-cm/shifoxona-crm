@@ -1,6 +1,9 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
-from .models import Order, OrderItem
+
 from apps.pharmacies.serializers import PharmacySerializer
+
+from .models import Order, OrderItem
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -33,9 +36,11 @@ class OrderListSerializer(serializers.ModelSerializer):
                   'pharmacy_latitude', 'pharmacy_longitude', 'status', 'total_amount',
                   'item_count', 'total_items', 'created_at', 'updated_at']
 
+    @extend_schema_field(serializers.IntegerField())
     def get_item_count(self, obj):
         return obj.items.count()
 
+    @extend_schema_field(serializers.IntegerField())
     def get_total_items(self, obj):
         return sum(item.quantity for item in obj.items.all())
 
@@ -52,6 +57,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
                   'items', 'note', 'delivery_status', 'received_at', 'received_by',
                   'receive_note', 'created_at', 'updated_at']
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_delivery_status(self, obj):
         if hasattr(obj, 'delivery'):
             return obj.delivery.get_status_display()

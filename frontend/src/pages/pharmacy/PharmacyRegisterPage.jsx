@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
 import { pharmaciesAPI } from '@/services/api'
 import Button from '@/components/ui/Button'
@@ -16,6 +17,7 @@ const defaultForm = {
 }
 
 export default function PharmacyRegisterPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [form, setForm] = useState({ ...defaultForm })
   const [loading, setLoading] = useState(false)
@@ -33,7 +35,7 @@ export default function PharmacyRegisterPage() {
     setLoading(true)
     try {
       await pharmaciesAPI.register(form)
-      toast.success("Ro'yxatdan o'tish muvaffaqiyatli! Admin tasdiqlashini kuting.")
+      toast.success(t('pharmacy.registerSuccess'))
       navigate('/pharmacy/login')
     } catch (err) {
       const data = err.response?.data
@@ -42,9 +44,9 @@ export default function PharmacyRegisterPage() {
           .filter(([, v]) => Array.isArray(v) || typeof v === 'string')
           .map(([, v]) => (Array.isArray(v) ? v.join(', ') : v))
           .join('; ')
-        toast.error(msgs || 'Xatolik yuz berdi')
+        toast.error(msgs || t('common.error'))
       } else {
-        toast.error('Xatolik yuz berdi')
+        toast.error(t('common.error'))
       }
     } finally { setLoading(false) }
   }
@@ -56,8 +58,8 @@ export default function PharmacyRegisterPage() {
           <div className="h-16 w-16 rounded-2xl bg-medical-500 flex items-center justify-center mx-auto mb-4">
             <Store className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold">Dorixona ro'yxatdan o'tish</h1>
-          <p className="text-gray-500 mt-1">Tizimga kirish uchun ma'lumotlaringizni kiriting</p>
+          <h1 className="text-2xl font-bold">{t('pharmacy.register')}</h1>
+          <p className="text-gray-500 mt-1">{t('pharmacy.registerSubtitle')}</p>
         </div>
 
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -73,21 +75,21 @@ export default function PharmacyRegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {step === 1 && (
               <>
-                <Input label="Dorixona nomi" value={form.name} onChange={(e) => update('name', e.target.value)} required />
-                <Input label="STIR yoki Litsenziya raqami" value={form.stir_or_license} onChange={(e) => update('stir_or_license', e.target.value)} required />
-                <Input label="Mas'ul shaxs F.I.Sh" value={form.responsible_person} onChange={(e) => update('responsible_person', e.target.value)} required />
-                <Input label="Telefon raqami" type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} required />
+                <Input label={t('pharmacy.name')} value={form.name} onChange={(e) => update('name', e.target.value)} required />
+                <Input label={t('pharmacy.stirLicense')} value={form.stir_or_license} onChange={(e) => update('stir_or_license', e.target.value)} required />
+                <Input label={t('pharmacy.responsible')} value={form.responsible_person} onChange={(e) => update('responsible_person', e.target.value)} required />
+                <Input label={t('pharmacy.phone')} type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} required />
                 <div className="flex justify-end pt-4">
-                  <Button type="button" onClick={() => setStep(2)}>Keyingi</Button>
+                  <Button type="button" onClick={() => setStep(2)}>{t('common.next')}</Button>
                 </div>
               </>
             )}
 
             {step === 2 && (
               <>
-                <Input label="Login" value={form.login} onChange={(e) => update('login', e.target.value)} required />
-                <Input label="Parol" type="password" value={form.password} onChange={(e) => update('password', e.target.value)} required />
-                <Input label="Parolni takrorlang" type="password" value={form.password_confirm} onChange={(e) => update('password_confirm', e.target.value)} required />
+                <Input label={t('login.login')} value={form.login} onChange={(e) => update('login', e.target.value)} required />
+                <Input label={t('login.password')} type="password" value={form.password} onChange={(e) => update('password', e.target.value)} required />
+                <Input label={t('login.passwordConfirm')} type="password" value={form.password_confirm} onChange={(e) => update('password_confirm', e.target.value)} required />
                 <RegionDistrictPicker
                   region={form.region}
                   district={form.district}
@@ -95,12 +97,12 @@ export default function PharmacyRegisterPage() {
                   onDistrictChange={(v) => update('district', v)}
                 />
                 <div>
-                  <label className="text-sm font-medium mb-1 block">To'liq manzil (ko'cha, uy)</label>
+                  <label className="text-sm font-medium mb-1 block">{t('pharmacy.fullAddress')}</label>
                   <textarea className="flex h-20 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-medical-500" value={form.address} onChange={(e) => update('address', e.target.value)} required />
                 </div>
                 <div className="flex justify-between pt-4">
-                  <Button variant="outline" type="button" onClick={() => setStep(1)}>Orqaga</Button>
-                  <Button type="button" onClick={() => setStep(3)}>Keyingi</Button>
+                  <Button variant="outline" type="button" onClick={() => setStep(1)}>{t('common.back')}</Button>
+                  <Button type="button" onClick={() => setStep(3)}>{t('common.next')}</Button>
                 </div>
               </>
             )}
@@ -109,7 +111,7 @@ export default function PharmacyRegisterPage() {
               <>
                 <div>
                   <label className="text-sm font-medium mb-1 block">
-                    Xaritadan joylashuvni belgilang
+                    {t('pharmacy.location')}
                   </label>
                   <LocationPicker
                     position={form.latitude && form.longitude ? { lat: form.latitude, lng: form.longitude } : null}
@@ -117,7 +119,7 @@ export default function PharmacyRegisterPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Dorixona rasmi (ixtiyoriy)</label>
+                  <label className="text-sm font-medium mb-1 block">{t('pharmacy.image')}</label>
                   <input type="file" accept="image/*" className="text-sm" onChange={(e) => {
                     const file = e.target.files[0]
                     if (file) {
@@ -128,8 +130,8 @@ export default function PharmacyRegisterPage() {
                   }} />
                 </div>
                 <div className="flex justify-between pt-4">
-                  <Button variant="outline" type="button" onClick={() => setStep(2)}>Orqaga</Button>
-                  <Button type="submit" isLoading={loading}>Ro'yxatdan o'tish</Button>
+                  <Button variant="outline" type="button" onClick={() => setStep(2)}>{t('common.back')}</Button>
+                  <Button type="submit" isLoading={loading}>{t('pharmacy.register')}</Button>
                 </div>
               </>
             )}
@@ -137,8 +139,8 @@ export default function PharmacyRegisterPage() {
         </div>
 
         <p className="text-center text-sm text-gray-500 mt-6">
-          Akkauntingiz bormi?{' '}
-          <Link to="/pharmacy/login" className="text-medical-600 hover:underline">Kirish</Link>
+          {t('pharmacy.hasAccount')}{' '}
+          <Link to="/pharmacy/login" className="text-medical-600 hover:underline">{t('pharmacy.login')}</Link>
         </p>
       </div>
     </div>

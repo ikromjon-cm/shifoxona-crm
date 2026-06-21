@@ -1,5 +1,5 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 
 
 class AuditLog(models.Model):
@@ -16,9 +16,9 @@ class AuditLog(models.Model):
         ('OTHER', 'Boshqa'),
     )
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Foydalanuvchi')
-    action = models.CharField(max_length=20, choices=ACTION_CHOICES, verbose_name='Harakat')
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES, verbose_name='Harakat', db_index=True)
     description = models.TextField(verbose_name='Tavsif')
-    model_name = models.CharField(max_length=100, blank=True, null=True, verbose_name='Model')
+    model_name = models.CharField(max_length=100, blank=True, null=True, verbose_name='Model', db_index=True)
     object_id = models.IntegerField(blank=True, null=True, verbose_name='Ob\'ekt ID')
     data_before = models.JSONField(blank=True, null=True, verbose_name='Oldingi ma\'lumot')
     data_after = models.JSONField(blank=True, null=True, verbose_name='Keyingi ma\'lumot')

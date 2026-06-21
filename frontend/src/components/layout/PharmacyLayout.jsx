@@ -2,18 +2,20 @@ import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, NavLink } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { notificationsAPI } from '@/services/api'
+import { useTranslation } from 'react-i18next'
 import { Store, Package, ShoppingCart, LogOut, Menu, X, LayoutDashboard, Bell, ClipboardList, User, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { to: '/pharmacy/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/pharmacy/catalog', icon: Package, label: 'Katalog' },
-  { to: '/pharmacy/cart', icon: ShoppingCart, label: 'Savatcha' },
-  { to: '/pharmacy/orders', icon: ClipboardList, label: 'Buyurtmalarim' },
-  { to: '/pharmacy/profile', icon: User, label: 'Profil' },
+  { to: '/pharmacy/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+  { to: '/pharmacy/catalog', icon: Package, labelKey: 'pharmacy.catalog' },
+  { to: '/pharmacy/cart', icon: ShoppingCart, labelKey: 'pharmacy.cart' },
+  { to: '/pharmacy/orders', icon: ClipboardList, labelKey: 'pharmacy.myOrders' },
+  { to: '/pharmacy/profile', icon: User, labelKey: 'pharmacy.profile' },
 ]
 
 export default function PharmacyLayout() {
+  const { t } = useTranslation()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -48,9 +50,9 @@ export default function PharmacyLayout() {
             </div>
             <div>
               <h1 className="text-sm font-bold bg-gradient-to-r from-medical-600 to-brand-600 dark:from-medical-400 dark:to-brand-400 bg-clip-text text-transparent">
-                {user?.pharmacy?.name || 'Dorixona'}
+                {user?.pharmacy?.name || t('pharmacy.name')}
               </h1>
-              <p className="text-[10px] text-gray-400 font-medium">Buyurtma tizimi</p>
+              <p className="text-[10px] text-gray-400 font-medium">{t('pharmacy.orderSystem')}</p>
             </div>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -76,7 +78,7 @@ export default function PharmacyLayout() {
                     'h-4.5 w-4.5 flex-shrink-0 transition-all',
                     isActive ? 'text-medical-500' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'
                   )} />
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">{t(item.labelKey)}</span>
                   {isActive && <ChevronRight className="h-3 w-3 text-medical-500" />}
                 </>
               )}
@@ -88,7 +90,7 @@ export default function PharmacyLayout() {
             onClick={() => { logout(); navigate('/pharmacy/login') }}
             className="group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
           >
-            <LogOut className="h-4.5 w-4.5" /> Chiqish
+            <LogOut className="h-4.5 w-4.5" /> {t('login.logout')}
           </button>
         </div>
       </aside>

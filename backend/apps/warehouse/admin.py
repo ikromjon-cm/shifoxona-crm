@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import IncomeTransaction, ExpenseTransaction, InventoryMovement
+
+from .models import ExpenseTransaction, IncomeTransaction, InventoryMovement
 
 
 @admin.register(IncomeTransaction)

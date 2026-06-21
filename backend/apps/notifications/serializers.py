@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Notification, NotificationSetting
+
+from .models import DeviceToken, Notification, NotificationSetting
 
 
 class NotificationSerializer(serializers.ModelSerializer):
@@ -11,4 +12,20 @@ class NotificationSerializer(serializers.ModelSerializer):
 class NotificationSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationSetting
-        fields = ['id', 'user', 'low_stock', 'expiry', 'income', 'expense', 'telegram', 'sms']
+        fields = ['id', 'user', 'low_stock', 'expiry', 'income', 'expense', 'push', 'telegram', 'sms']
+
+
+class DeviceTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceToken
+        fields = ['id', 'token', 'platform', 'is_active', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        token, created = DeviceToken.objects.update_or_create(
+            user=user,
+            token=validated_data['token'],
+            defaults={'platform': validated_data.get('platform', 'android'), 'is_active': True},
+        )
+        return token

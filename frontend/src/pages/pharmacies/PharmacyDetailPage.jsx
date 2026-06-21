@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
 import { pharmaciesAPI } from '@/services/api'
 import { DataTable } from '@/components/ui/DataTable'
@@ -22,6 +23,7 @@ const defaultIcon = L.icon({
 })
 
 export default function PharmacyDetailPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const [pharmacy, setPharmacy] = useState(null)
@@ -36,15 +38,15 @@ export default function PharmacyDetailPage() {
       const res = await pharmaciesAPI.get(id)
       setPharmacy(res.data)
     } catch (err) {
-      toast.error('Dorixonani yuklashda xatolik')
+      toast.error(t('pharmacy.errorLoad'))
     } finally { setLoading(false) }
   }
 
   const columns = [
-    { key: 'medicine_name', label: 'Mahsulot' },
-    { key: 'barcode', label: 'Barcode' },
-    { key: 'quantity', label: 'Dorixonadagi soni' },
-    { key: 'created_at', label: 'Qoshilgan sana', render: (r) => formatDate(r.created_at) },
+    { key: 'medicine_name', label: t('medicine.name') },
+    { key: 'barcode', label: t('medicine.barcode') },
+    { key: 'quantity', label: t('pharmacy.quantity') },
+    { key: 'created_at', label: t('pharmacy.dateAdded'), render: (r) => formatDate(r.created_at) },
   ]
 
   if (loading) {
@@ -56,7 +58,7 @@ export default function PharmacyDetailPage() {
   }
 
   if (!pharmacy) {
-    return <div className="text-center py-12 text-gray-500">Dorixona topilmadi</div>
+    return <div className="text-center py-12 text-gray-500">{t('pharmacy.notFound')}</div>
   }
 
   const totalProducts = pharmacy.products?.reduce((sum, p) => sum + p.quantity, 0) || 0
@@ -75,13 +77,13 @@ export default function PharmacyDetailPage() {
           </div>
         </div>
         <Badge variant={pharmacy.is_active ? 'success' : 'danger'}>
-          {pharmacy.is_active ? 'Faol' : 'Faol emas'}
+          {pharmacy.is_active ? t('medicine.statusActive') : t('medicine.statusInactive')}
         </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle className="text-sm flex items-center gap-1"><MapPin className="h-4 w-4" /> Xaritadagi joylashuv</CardTitle></CardHeader>
+          <CardHeader>          <CardTitle className="text-sm flex items-center gap-1"><MapPin className="h-4 w-4" /> {t('pharmacy.mapLocation')}</CardTitle></CardHeader>
           <CardContent>
             {hasLocation ? (
               <div className="h-64 w-full rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -96,23 +98,23 @@ export default function PharmacyDetailPage() {
                 </MapContainer>
               </div>
             ) : (
-              <p className="text-gray-500 text-sm">Joylashuv belgilanmagan</p>
+              <p className="text-gray-500 text-sm">{t('pharmacy.locationNotSet')}</p>
             )}
           </CardContent>
         </Card>
 
         <div className="space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Telefon</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t('pharmacy.phone')}</CardTitle></CardHeader>
             <CardContent><p className="text-lg font-semibold">{pharmacy.phone || '-'}</p></CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-sm">Masul shaxs</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t('pharmacy.responsible')}</CardTitle></CardHeader>
             <CardContent><p className="text-lg font-semibold">{pharmacy.responsible_person || '-'}</p></CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-sm">Jami mahsulotlar</CardTitle></CardHeader>
-            <CardContent><p className="text-lg font-semibold">{totalProducts} dona</p></CardContent>
+            <CardHeader><CardTitle className="text-sm">{t('pharmacy.totalProducts')}</CardTitle></CardHeader>
+            <CardContent><p className="text-lg font-semibold">{totalProducts} {t('pharmacy.unit')}</p></CardContent>
           </Card>
         </div>
       </div>
@@ -120,11 +122,11 @@ export default function PharmacyDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" /> Dorixonadagi mahsulotlar
+            <Building2 className="h-5 w-5" /> {t('pharmacy.productsInPharmacy')}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <DataTable columns={columns} data={pharmacy.products || []} emptyMessage="Dorixonada mahsulot mavjud emas" />
+          <DataTable columns={columns} data={pharmacy.products || []} emptyMessage={t('pharmacy.noProducts')} />
         </CardContent>
       </Card>
     </div>

@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ordersAPI } from '@/services/api'
 import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
 import { ShoppingCart, Trash2, ArrowLeft, Minus, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function CartPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('pharmacyCart') || '[]'))
@@ -29,18 +30,18 @@ export default function CartPage() {
 
   const removeItem = (medicineId) => {
     setCart(prev => prev.filter(item => item.medicine !== medicineId))
-    toast.success("Mahsulot savatchadan olib tashlandi")
+    toast.success(t('pharmacy.removedFromCart'))
   }
 
   const total = cart.reduce((sum, item) => sum + item.quantity * item.price, 0)
 
   const placeOrder = async () => {
     if (!user?.pharmacy?.id) {
-      toast.error('Dorixona profili topilmadi')
+      toast.error(t('pharmacy.profileNotFound'))
       return
     }
     if (cart.length === 0) {
-      toast.error('Savatcha bo\'sh')
+      toast.error(t('pharmacy.cartEmpty'))
       return
     }
     setLoading(true)
@@ -55,15 +56,15 @@ export default function CartPage() {
         })),
       })
       localStorage.removeItem('pharmacyCart')
-      toast.success('Buyurtma muvaffaqiyatli yaratildi!')
+      toast.success(t('pharmacy.orderCreated'))
       navigate('/pharmacy/dashboard')
     } catch (err) {
       const data = err.response?.data
       if (data && typeof data === 'object') {
         const msg = Object.values(data).flat().join('; ')
-        toast.error(msg || 'Xatolik yuz berdi')
+        toast.error(msg || t('common.error'))
       } else {
-        toast.error('Xatolik yuz berdi')
+        toast.error(t('common.error'))
       }
     } finally { setLoading(false) }
   }
@@ -75,12 +76,12 @@ export default function CartPage() {
           <Button variant="ghost" size="sm" onClick={() => navigate('/pharmacy/catalog')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-2xl font-bold">Savatcha</h1>
+          <h1 className="text-2xl font-bold">{t('pharmacy.cart')}</h1>
         </div>
         <Card><CardContent className="p-12 text-center text-gray-500">
           <ShoppingCart className="h-16 w-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg mb-4">Savatcha bo'sh</p>
-          <Button onClick={() => navigate('/pharmacy/catalog')}>Katalogga o'tish</Button>
+          <p className="text-lg mb-4">{t('pharmacy.cartEmpty')}</p>
+          <Button onClick={() => navigate('/pharmacy/catalog')}>{t('pharmacy.goToCatalog')}</Button>
         </CardContent></Card>
       </div>
     )
@@ -92,7 +93,7 @@ export default function CartPage() {
         <Button variant="ghost" size="sm" onClick={() => navigate('/pharmacy/catalog')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-2xl font-bold">Savatcha ({cart.length})</h1>
+        <h1 className="text-2xl font-bold">{t('pharmacy.cart')} ({cart.length})</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -102,9 +103,9 @@ export default function CartPage() {
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex-1">
                   <h3 className="font-semibold">{item.medicine_name}</h3>
-                  <p className="text-xs text-gray-500">Barcode: {item.barcode}</p>
+                  <p className="text-xs text-gray-500">{t('medicine.barcode')}: {item.barcode}</p>
                   <p className="text-sm font-medium text-medical-600 mt-1">
-                    {Number(item.price).toLocaleString()} so'm
+                    {Number(item.price).toLocaleString()} so&apos;m
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -132,7 +133,7 @@ export default function CartPage() {
         <div className="lg:sticky lg:top-4 self-start">
           <Card>
             <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold">Buyurtma yakuni</h3>
+              <h3 className="font-semibold">{t('pharmacy.checkout')}</h3>
               <div className="space-y-2">
                 {cart.map(item => (
                   <div key={item.medicine} className="flex justify-between text-sm">
@@ -141,20 +142,20 @@ export default function CartPage() {
                   </div>
                 ))}
                 <div className="border-t pt-2 flex justify-between font-bold">
-                  <span>Jami:</span>
-                  <span>{total.toLocaleString()} so'm</span>
+                  <span>{t('pharmacy.total')}</span>
+                  <span>{total.toLocaleString()} so&apos;m</span>
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Izoh</label>
+                <label className="text-sm font-medium mb-1 block">{t('pharmacy.comment')}</label>
                 <textarea
                   className="flex h-20 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm"
                   value={note} onChange={(e) => setNote(e.target.value)}
-                  placeholder="Buyurtmaga izoh qoldiring..."
+                  placeholder={t('pharmacy.commentPlaceholder')}
                 />
               </div>
               <Button className="w-full" onClick={placeOrder} isLoading={loading}>
-                Buyurtma berish ({total.toLocaleString()} so'm)
+                {t('pharmacy.order')} ({total.toLocaleString()} so&apos;m)
               </Button>
             </CardContent>
           </Card>

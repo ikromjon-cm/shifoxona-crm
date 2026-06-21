@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { reportsAPI, warehouseAPI } from '@/services/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -10,6 +11,7 @@ import { FileText, Download, TrendingUp, TrendingDown, RefreshCw } from 'lucide-
 import toast from 'react-hot-toast'
 
 export default function ReportsPage() {
+  const { t } = useTranslation()
   const [filters, setFilters] = useState({
     report_type: 'income',
     file_format: 'xlsx',
@@ -41,14 +43,14 @@ export default function ReportsPage() {
   }
 
   const reportTypes = [
-    { value: 'income', label: 'Kirim hisoboti' },
-    { value: 'expense', label: 'Chiqim hisoboti' },
-    { value: 'inventory', label: 'Inventar hisoboti' },
-    { value: 'expiry', label: 'Muddati tugayotgan mahsulotlar' },
+    { value: 'income', label: t('report.income') },
+    { value: 'expense', label: t('report.expense') },
+    { value: 'inventory', label: t('report.inventory') },
+    { value: 'expiry', label: t('report.expiry') },
   ]
 
   const formatOptions = [
-    { value: 'xlsx', label: 'Excel (.xlsx)' },
+    { value: 'xlsx', label: `${t('report.format')} (.xlsx)` },
     { value: 'csv', label: 'CSV (.csv)' },
   ]
 
@@ -65,10 +67,10 @@ export default function ReportsPage() {
       a.download = `hisobot_${filters.report_type}_${new Date().toISOString().slice(0, 10)}.${filters.file_format}`
       a.click()
       window.URL.revokeObjectURL(url)
-      toast.success('Hisobot yuklab olindi')
+      toast.success(t('report.downloaded'))
       setHistoryKey(k => k + 1)
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.detail || 'Hisobot yaratishda xatolik'
+      const msg = err.response?.data?.error || err.response?.data?.detail || t('report.errorGenerate')
       toast.error(msg)
     } finally {
       setGenerating(false)
@@ -78,8 +80,8 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Hisobotlar</h1>
-        <p className="text-gray-500 mt-1">Hisobotlarni yaratish va eksport qilish</p>
+        <h1 className="text-2xl font-bold">{t('report.title')}</h1>
+        <p className="text-gray-500 mt-1">{t('report.desc')}</p>
       </div>
 
       {stats && (
@@ -90,9 +92,9 @@ export default function ReportsPage() {
                 <TrendingUp className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Oxirgi 5 ta kirim</p>
-                <p className="text-xl font-bold text-emerald-600">{stats.totalIncome.toLocaleString()} so'm</p>
-                <p className="text-xs text-gray-400">Jami: {stats.incomeCount} ta tranzaksiya</p>
+                <p className="text-sm text-gray-500">{t('report.lastIncome')}</p>
+                <p className="text-xl font-bold text-emerald-600">{stats.totalIncome.toLocaleString()} {t('currency.soum')}</p>
+                <p className="text-xs text-gray-400">{t('common.total')}: {stats.incomeCount} {t('report.transactions')}</p>
               </div>
             </CardContent>
           </Card>
@@ -102,9 +104,9 @@ export default function ReportsPage() {
                 <TrendingDown className="h-6 w-6 text-rose-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Oxirgi 5 ta chiqim</p>
-                <p className="text-xl font-bold text-rose-600">{stats.totalExpense.toLocaleString()} so'm</p>
-                <p className="text-xs text-gray-400">Jami: {stats.expenseCount} ta tranzaksiya</p>
+                <p className="text-sm text-gray-500">{t('report.lastExpense')}</p>
+                <p className="text-xl font-bold text-rose-600">{stats.totalExpense.toLocaleString()} {t('currency.soum')}</p>
+                <p className="text-xs text-gray-400">{t('common.total')}: {stats.expenseCount} {t('report.transactions')}</p>
               </div>
             </CardContent>
           </Card>
@@ -114,38 +116,38 @@ export default function ReportsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" /> Hisobot yaratish
+            <FileText className="h-5 w-5" /> {t('report.generate')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Select
-              label="Hisobot turi"
+              label={t('report.type')}
               options={reportTypes}
               value={filters.report_type}
               onChange={(e) => setFilters(prev => ({ ...prev, report_type: e.target.value }))}
             />
             <Select
-              label="Format"
+              label={t('report.format')}
               options={formatOptions}
               value={filters.file_format}
               onChange={(e) => setFilters(prev => ({ ...prev, file_format: e.target.value }))}
             />
             <Input
-              label="Boshlang'ich sana"
+              label={t('report.startDate')}
               type="date"
               value={filters.start_date}
               onChange={(e) => setFilters(prev => ({ ...prev, start_date: e.target.value }))}
             />
             <Input
-              label="Tugash sanasi"
+              label={t('report.endDate')}
               type="date"
               value={filters.end_date}
               onChange={(e) => setFilters(prev => ({ ...prev, end_date: e.target.value }))}
             />
           </div>
           <Button onClick={handleGenerate} isLoading={generating} size="lg">
-            <Download className="h-4 w-4 mr-2" /> Hisobotni yuklab olish
+            <Download className="h-4 w-4 mr-2" /> {t('report.download')}
           </Button>
         </CardContent>
       </Card>
@@ -156,6 +158,7 @@ export default function ReportsPage() {
 }
 
 function ReportHistory() {
+  const { t } = useTranslation()
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -163,32 +166,32 @@ function ReportHistory() {
     setLoading(true)
     reportsAPI.list()
       .then(res => setReports(res.data.results || res.data))
-      .catch(() => toast.error('Hisobotlar tarixini yuklashda xatolik'))
+      .catch(() => toast.error(t('report.errorHistoryLoad')))
       .finally(() => setLoading(false))
   }, [])
 
   const typeLabels = {
-    income: 'Kirim',
-    expense: 'Chiqim',
-    inventory: 'Inventar',
-    expiry: 'Muddati tugayotgan',
+    income: t('report.income'),
+    expense: t('report.expense'),
+    inventory: t('report.inventory'),
+    expiry: t('report.expiry'),
   }
 
   const columns = [
-    { key: 'title', label: 'Nomi' },
+    { key: 'title', label: t('medicine.name') },
     {
-      key: 'report_type', label: 'Tur',
+      key: 'report_type', label: t('task.type'),
       render: (r) => <Badge variant="info">{typeLabels[r.report_type] || r.report_type}</Badge>
     },
     {
-      key: 'file_format', label: 'Format',
+      key: 'file_format', label: t('report.format'),
       render: (r) => <Badge variant="default">{r.file_format?.toUpperCase()}</Badge>
     },
-    { key: 'created_by_name', label: 'Kim yaratgan' },
-    { key: 'created_at', label: 'Sana', render: (r) => new Date(r.created_at).toLocaleString('uz-UZ') },
+    { key: 'created_by_name', label: t('report.createdBy') },
+    { key: 'created_at', label: t('warehouse.date'), render: (r) => new Date(r.created_at).toLocaleString('uz-UZ') },
     {
-      key: 'is_ready', label: 'Holat',
-      render: (r) => <Badge variant={r.is_ready ? 'success' : 'warning'}>{r.is_ready ? 'Tayyor' : 'Yaratilmoqda'}</Badge>
+      key: 'is_ready', label: t('medicine.status'),
+      render: (r) => <Badge variant={r.is_ready ? 'success' : 'warning'}>{r.is_ready ? t('report.ready') : t('report.generating')}</Badge>
     },
   ]
 
@@ -196,7 +199,7 @@ function ReportHistory() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <RefreshCw className="h-4 w-4" /> Yaratilgan hisobotlar tarixi
+          <RefreshCw className="h-4 w-4" /> {t('report.history')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -204,7 +207,7 @@ function ReportHistory() {
           columns={columns}
           data={reports}
           loading={loading}
-          emptyMessage="Hali hech qanday hisobot yaratilmagan"
+          emptyMessage={t('report.noReports')}
         />
       </CardContent>
     </Card>

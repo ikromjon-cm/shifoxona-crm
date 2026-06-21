@@ -1,28 +1,35 @@
-import io
 import csv
-from datetime import datetime, timedelta
+import io
+from datetime import timedelta
+
 from django.db import models
+from drf_spectacular.utils import extend_schema
 from django.db.models.functions import TruncMonth
 from django.http import HttpResponse
 from django.utils import timezone
-from rest_framework import viewsets, status, generics
-from rest_framework.response import Response
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font, PatternFill
+from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment
-from .models import Report
-from .serializers import ReportSerializer, ReportGenerateSerializer
-from apps.warehouse.models import IncomeTransaction, ExpenseTransaction
+from rest_framework.response import Response
+
+from apps.accounts.permissions import IsAdmin, IsFinance
 from apps.inventory.models import Inventory
 from apps.medicines.models import Medicine, MedicineBatch
 from apps.pharmacies.models import Pharmacy
+from apps.warehouse.models import ExpenseTransaction, IncomeTransaction
+
+from .models import Report
+from .serializers import ReportGenerateSerializer, ReportSerializer
 
 
 class ReportViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFinance]
     ordering_fields = ['-created_at']
 
     def get_queryset(self):
@@ -183,9 +190,12 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
         return data
 
 
+@extend_schema(exclude=True)
 class DashboardView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    cache_key_prefix = 'dashboard_main'
 
+    @method_decorator(cache_page(120, key_prefix='dashboard_main'))
     def get(self, request):
         total_medicines = Medicine.objects.count()
         total_quantity = Medicine.objects.aggregate(models.Sum('quantity'))['quantity__sum'] or 0
@@ -264,4 +274,203 @@ class DashboardView(generics.GenericAPIView):
             'received_orders': received_orders,
             'top_pharmacies': list(top_pharmacies),
             'pharmacy_locations': list(pharmacy_locations),
+        })
+
+
+@extend_schema(exclude=True)
+class AdminDashboardView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    @method_decorator(cache_page(120, key_prefix='dashboard_admin'))
+    def get(self, request):
+        from django.contrib.auth import get_user_model
+
+        from apps.attendance.models import AttendanceSession, LeaveRequest
+        from apps.chat.models import ChatMessage, ChatRoom
+        from apps.delivery.models import Delivery
+        from apps.orders.models import Order
+        from apps.tasks.models import Task
+        from apps.warehouse.models import PickOrder, PickWave, Warehouse
+
+        User = get_user_model()
+        today = timezone.now().date()
+
+        # Users
+        users = User.objects.all()
+        user_stats = {
+            'total': users.count(),
+            'active': users.filter(is_active=True, is_blocked=False).count(),
+            'blocked': users.filter(is_blocked=True).count(),
+            'by_role': {
+                role: users.filter(role=role).count()
+                for role, _ in User.ROLE_CHOICES
+            },
+        }
+
+        # Warehouse
+        warehouse_stats = {
+            'total_warehouses': Warehouse.objects.count(),
+            'active_pick_waves': PickWave.objects.filter(status='in_progress').count(),
+            'pending_pick_orders': PickOrder.objects.filter(status='pending').count(),
+            'completed_today_picks': PickOrder.objects.filter(
+                completed_at__date=today, status='picked'
+            ).count(),
+        }
+
+        # Orders
+        order_stats = {
+            'total': Order.objects.count(),
+            'today': Order.objects.filter(created_at__date=today).count(),
+            'pending': Order.objects.filter(status='pending').count(),
+            'in_progress': Order.objects.filter(status__in=['confirmed', 'preparing']).count(),
+            'shipped': Order.objects.filter(status='shipped').count(),
+            'delivered': Order.objects.filter(status='delivered').count(),
+            'received': Order.objects.filter(status='received').count(),
+            'cancelled': Order.objects.filter(status='cancelled').count(),
+        }
+
+        # Delivery
+        delivery_stats = {
+            'pending': Delivery.objects.filter(status='pending').count(),
+            'in_transit': Delivery.objects.filter(status='in_transit').count(),
+            'delivered_today': Delivery.objects.filter(
+                delivered_at__date=today, status='delivered'
+            ).count(),
+            'active_couriers': User.objects.filter(
+                role='operator', is_active=True, is_blocked=False
+            ).count(),
+        }
+
+        # Attendance
+        attendance_stats = {
+            'checked_in_today': AttendanceSession.objects.filter(
+                date=today, check_in__isnull=False
+            ).count(),
+            'on_leave_today': LeaveRequest.objects.filter(
+                status='approved',
+                start_date__lte=today,
+                end_date__gte=today,
+            ).count(),
+            'pending_leaves': LeaveRequest.objects.filter(status='pending').count(),
+        }
+
+        # Tasks
+        task_stats = {
+            'total': Task.objects.count(),
+            'pending': Task.objects.filter(status='pending').count(),
+            'in_progress': Task.objects.filter(status='in_progress').count(),
+            'completed_today': Task.objects.filter(
+                completed_at__date=today, status='completed'
+            ).count(),
+            'overdue': Task.objects.filter(
+                status__in=['pending', 'in_progress'],
+                due_date__lt=today,
+            ).count(),
+        }
+
+        # Chat
+        chat_stats = {
+            'total_rooms': ChatRoom.objects.count(),
+            'active_today': ChatRoom.objects.filter(
+                updated_at__date=today
+            ).count(),
+            'messages_today': ChatMessage.objects.filter(
+                created_at__date=today
+            ).count(),
+        }
+
+        # Revenue
+        from apps.warehouse.models import ExpenseTransaction, IncomeTransaction
+        this_month_start = today.replace(day=1)
+        revenue_stats = {
+            'today_income': (IncomeTransaction.objects.filter(
+                created_at__date=today
+            ).aggregate(t=models.Sum('total_amount'))['t'] or 0),
+            'today_expense': (ExpenseTransaction.objects.filter(
+                created_at__date=today
+            ).aggregate(t=models.Sum('total_amount'))['t'] or 0),
+            'month_income': (IncomeTransaction.objects.filter(
+                created_at__date__gte=this_month_start
+            ).aggregate(t=models.Sum('total_amount'))['t'] or 0),
+            'month_expense': (ExpenseTransaction.objects.filter(
+                created_at__date__gte=this_month_start
+            ).aggregate(t=models.Sum('total_amount'))['t'] or 0),
+        }
+
+        # Monthly trend (last 6 months)
+        six_months_ago = today - timedelta(days=180)
+        monthly_income = IncomeTransaction.objects.filter(
+            created_at__date__gte=six_months_ago
+        ).annotate(
+            month=TruncMonth('created_at')
+        ).values('month').annotate(
+            total=models.Sum('total_amount'),
+            count=models.Count('id')
+        ).order_by('month')
+
+        monthly_expense = ExpenseTransaction.objects.filter(
+            created_at__date__gte=six_months_ago
+        ).annotate(
+            month=TruncMonth('created_at')
+        ).values('month').annotate(
+            total=models.Sum('total_amount'),
+            count=models.Count('id')
+        ).order_by('month')
+
+        monthly_orders = Order.objects.filter(
+            created_at__date__gte=six_months_ago
+        ).annotate(
+            month=TruncMonth('created_at')
+        ).values('month').annotate(
+            count=models.Count('id'),
+            total_amount=models.Sum('total_amount')
+        ).order_by('month')
+
+        # Inventory alerts
+        low_stock = Medicine.objects.filter(
+            quantity__lte=models.F('min_quantity'), is_active=True
+        ).values('id', 'name', 'quantity', 'min_quantity')[:20]
+
+        expiring_batches = MedicineBatch.objects.filter(
+            expiry_date__lte=today + timedelta(days=30),
+            expiry_date__gte=today,
+            quantity__gt=0,
+        ).select_related('medicine').order_by('expiry_date')[:20]
+
+        return Response({
+            'users': user_stats,
+            'warehouse': warehouse_stats,
+            'orders': order_stats,
+            'delivery': delivery_stats,
+            'attendance': attendance_stats,
+            'tasks': task_stats,
+            'chat': chat_stats,
+            'revenue': revenue_stats,
+            'trends': {
+                'monthly_income': [
+                    {'month': m['month'], 'total': float(m['total']), 'count': m['count']}
+                    for m in monthly_income
+                ],
+                'monthly_expense': [
+                    {'month': m['month'], 'total': float(m['total']), 'count': m['count']}
+                    for m in monthly_expense
+                ],
+                'monthly_orders': [
+                    {'month': m['month'], 'count': m['count'], 'total_amount': float(m['total_amount'])}
+                    for m in monthly_orders
+                ],
+            },
+            'alerts': {
+                'low_stock': list(low_stock),
+                'expiring_batches': [
+                    {
+                        'id': b.id,
+                        'medicine_name': b.medicine.name,
+                        'batch': b.batch_number or b.series_number,
+                        'expiry_date': b.expiry_date,
+                        'quantity': b.quantity,
+                    }
+                    for b in expiring_batches
+                ],
+            },
         })

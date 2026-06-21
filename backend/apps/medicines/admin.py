@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import MedicineCategory, Supplier, Medicine, MedicineBatch
+
+from .models import Medicine, MedicineBatch, MedicineCategory, Supplier
 
 
 @admin.register(MedicineCategory)

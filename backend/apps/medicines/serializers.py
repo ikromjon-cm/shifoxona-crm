@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import MedicineCategory, Supplier, Medicine, MedicineBatch
+
+from .models import Medicine, MedicineBatch, MedicineCategory, Supplier
 
 
 class MedicineCategorySerializer(serializers.ModelSerializer):

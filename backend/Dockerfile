@@ -9,6 +9,8 @@ ENV PIP_NO_CACHE_DIR=1
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
+    netcat-openbsd \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -18,6 +20,8 @@ COPY . .
 
 RUN mkdir -p logs media staticfiles
 
+RUN chmod +x entrypoint.sh wait-for-it.sh
+
 EXPOSE 8000
 
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4"]
+ENTRYPOINT ["./entrypoint.sh"]

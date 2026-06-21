@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { medicinesAPI, categoriesAPI, suppliersAPI, batchesAPI } from '@/services/api'
 import { DataTable } from '@/components/ui/DataTable'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -12,6 +13,7 @@ import toast from 'react-hot-toast'
 import { exportToExcel, formatDate } from '@/lib/utils'
 
 export default function MedicinesPage() {
+  const { t } = useTranslation()
   const [medicines, setMedicines] = useState([])
   const [categories, setCategories] = useState([])
   const [suppliers, setSuppliers] = useState([])
@@ -55,7 +57,7 @@ export default function MedicinesPage() {
       setMedicines(res.data.results || res.data)
       setTotalPages(Math.ceil((res.data.count || 0) / 20) || 1)
     } catch (err) {
-      toast.error('Mahsulotlarni yuklashda xatolik')
+      toast.error(t('medicine.errorLoad'))
     } finally {
       setLoading(false)
     }
@@ -66,7 +68,7 @@ export default function MedicinesPage() {
       const res = await categoriesAPI.list()
       setCategories(res.data.results || res.data)
     } catch (err) {
-      toast.error('Kategoriyalarni yuklashda xatolik')
+      toast.error(t('medicine.errorLoadCategories'))
     }
   }
 
@@ -75,7 +77,7 @@ export default function MedicinesPage() {
       const res = await suppliersAPI.list()
       setSuppliers(res.data.results || res.data)
     } catch (err) {
-      toast.error('Yetkazib beruvchilarni yuklashda xatolik')
+      toast.error(t('medicine.errorLoadSuppliers'))
     }
   }
 
@@ -84,7 +86,7 @@ export default function MedicinesPage() {
       const res = await batchesAPI.list({ medicine: medicineId })
       setBatches(res.data.results || res.data)
     } catch (err) {
-      toast.error('Partiyalarni yuklashda xatolik')
+      toast.error(t('medicine.errorLoadBatches'))
     }
   }
 
@@ -94,7 +96,7 @@ export default function MedicinesPage() {
       return Object.values(data).flat().join('; ')
     }
     if (err.response?.status === 403) {
-      return "Sizda huquq yo'q"
+      return t('medicine.errorNoPermission')
     }
     return null
   }
@@ -126,10 +128,10 @@ export default function MedicinesPage() {
 
       if (editing) {
         await medicinesAPI.update(editing.id, data)
-        toast.success('Mahsulot tahrirlandi')
+        toast.success(t('medicine.updated'))
       } else {
         await medicinesAPI.create(data)
-        toast.success("Mahsulot qo'shildi")
+        toast.success(t('medicine.added'))
       }
       setShowModal(false)
       setEditing(null)
@@ -139,18 +141,18 @@ export default function MedicinesPage() {
       fetchMedicines()
     } catch (err) {
       const msg = getValidationError(err)
-      toast.error(msg || 'Xatolik yuz berdi')
+      toast.error(msg || t('common.error'))
     }
   }
 
   const handleDelete = async (id) => {
-    if (!confirm("Mahsulotni o'chirishni xohlaysizmi?")) return
+    if (!confirm(t('medicine.deleteConfirm'))) return
     try {
       await medicinesAPI.delete(id)
-      toast.success("Mahsulot o'chirildi")
+      toast.success(t('medicine.deleted'))
       fetchMedicines()
     } catch (err) {
-      toast.error(err.response?.data?.detail || "O'chirishda xatolik")
+      toast.error(err.response?.data?.detail || t('medicine.errorDelete'))
     }
   }
 
@@ -197,24 +199,24 @@ export default function MedicinesPage() {
   }
 
   const columns = [
-    { key: 'name', label: 'Nomi' },
-    { key: 'category_name', label: 'Kategoriya' },
-    { key: 'barcode', label: 'Barcode' },
+    { key: 'name', label: t('medicine.name') },
+    { key: 'category_name', label: t('medicine.category') },
+    { key: 'barcode', label: t('medicine.barcode') },
     {
-      key: 'quantity', label: 'Soni',
+      key: 'quantity', label: t('medicine.quantity'),
       render: (row) => (
         <span className={row.is_low_stock ? 'text-red-500 font-bold' : ''}>
           {row.quantity}
         </span>
       ),
     },
-    { key: 'purchase_price', label: 'Kirim narxi', render: (row) => Number(row.purchase_price).toLocaleString() },
-    { key: 'selling_price', label: 'Sotuv narxi', render: (row) => Number(row.selling_price).toLocaleString() },
+    { key: 'purchase_price', label: t('medicine.buyPrice'), render: (row) => Number(row.purchase_price).toLocaleString() },
+    { key: 'selling_price', label: t('medicine.sellPrice'), render: (row) => Number(row.selling_price).toLocaleString() },
     {
-      key: 'is_active', label: 'Holat',
+      key: 'is_active', label: t('medicine.status'),
       render: (row) => (
         <Badge variant={row.is_active ? 'success' : 'danger'}>
-          {row.is_active ? 'Faol' : 'Faol emas'}
+          {row.is_active ? t('medicine.statusActive') : t('medicine.statusInactive')}
         </Badge>
       ),
     },
@@ -222,7 +224,7 @@ export default function MedicinesPage() {
       key: 'actions', label: '',
       render: (row) => (
         <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="sm" onClick={() => handleViewBatches(row)} title="Partiyalar">
+          <Button variant="ghost" size="sm" onClick={() => handleViewBatches(row)} title={t('medicine.batches')}>
             <Package className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}>
@@ -240,26 +242,26 @@ export default function MedicinesPage() {
   const supplierOptions = suppliers.map(s => ({ value: s.id, label: s.name }))
 
   const batchColumns = [
-    { key: 'series_number', label: 'Seriya' },
-    { key: 'quantity', label: 'Miqdor' },
-    { key: 'purchase_price', label: 'Kirim narxi', render: (r) => Number(r.purchase_price).toLocaleString() },
-    { key: 'production_date', label: 'Ishl. sanasi', render: (r) => r.production_date ? formatDate(r.production_date) : '-' },
-    { key: 'expiry_date', label: 'Muddati', render: (r) => formatDate(r.expiry_date) },
+    { key: 'series_number', label: t('medicine.batchSeries') },
+    { key: 'quantity', label: t('medicine.quantity') },
+    { key: 'purchase_price', label: t('medicine.buyPrice'), render: (r) => Number(r.purchase_price).toLocaleString() },
+    { key: 'production_date', label: t('medicine.productionDate'), render: (r) => r.production_date ? formatDate(r.production_date) : '-' },
+    { key: 'expiry_date', label: t('medicine.expiryDate'), render: (r) => formatDate(r.expiry_date) },
   ]
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Mahsulotlar</h1>
-          <p className="text-gray-500 mt-1">Barcha mahsulotlarni boshqarish</p>
+          <h1 className="text-2xl font-bold">{t('medicine.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('medicine.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => exportToExcel(medicines, columns, 'mahsulotlar')}>
-            Excel
+          <Button variant="outline" onClick={() => exportToExcel(medicines, columns, t('medicine.title'))}>
+            {t('medicine.excel')}
           </Button>
           <Button onClick={() => { setEditing(null); resetForm(); setImageFile(null); setImagePreview(null); setShowModal(true) }}>
-            <Plus className="h-4 w-4 mr-2" /> Yangi mahsulot
+            <Plus className="h-4 w-4 mr-2" /> {t('medicine.newItem')}
           </Button>
         </div>
       </div>
@@ -279,25 +281,25 @@ export default function MedicinesPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Mahsulotni tahrirlash' : 'Yangi mahsulot'} size="lg">
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? t('medicine.editTitle') : t('medicine.newTitle')} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="Mahsulot nomi" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+          <Input label={t('medicine.name')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Kategoriya" options={categoryOptions} value={form.category} onChange={(e) => setForm({ ...form, category: Number(e.target.value) || '' })} placeholder="Kategoriyani tanlang" />
-            <Select label="Yetkazib beruvchi" options={supplierOptions} value={form.supplier} onChange={(e) => setForm({ ...form, supplier: Number(e.target.value) || '' })} placeholder="Yetkazib beruvchini tanlang" />
+            <Select label={t('medicine.category')} options={categoryOptions} value={form.category} onChange={(e) => setForm({ ...form, category: Number(e.target.value) || '' })} placeholder={t('medicine.selectCategory')} />
+            <Select label={t('medicine.supplier')} options={supplierOptions} value={form.supplier} onChange={(e) => setForm({ ...form, supplier: Number(e.target.value) || '' })} placeholder={t('medicine.selectSupplier')} />
           </div>
-          <Input label="Barcode" value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })} placeholder="Bo'sh qoldirilsa, avtomatik generatsiya qilinadi" />
-          <Input label="Seriya raqami" value={form.series_number} onChange={(e) => setForm({ ...form, series_number: e.target.value })} placeholder="Seriya raqami" />
+          <Input label={t('medicine.barcode')} value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })} placeholder={t('medicine.barcodeAuto')} />
+          <Input label={t('medicine.seriesNumber')} value={form.series_number} onChange={(e) => setForm({ ...form, series_number: e.target.value })} placeholder={t('medicine.seriesNumber')} />
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Xarid narxi" type="number" value={form.purchase_price} onChange={(e) => setForm({ ...form, purchase_price: e.target.value })} required />
-            <Input label="Sotuv narxi" type="number" value={form.selling_price} onChange={(e) => setForm({ ...form, selling_price: e.target.value })} required />
+            <Input label={t('medicine.purchasePrice')} type="number" value={form.purchase_price} onChange={(e) => setForm({ ...form, purchase_price: e.target.value })} required />
+            <Input label={t('medicine.sellPrice')} type="number" value={form.selling_price} onChange={(e) => setForm({ ...form, selling_price: e.target.value })} required />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Miqdori" type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} required />
-            <Input label="Minimal qoldiq" type="number" value={form.min_quantity} onChange={(e) => setForm({ ...form, min_quantity: e.target.value })} />
+            <Input label={t('medicine.quantity')} type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} required />
+            <Input label={t('medicine.minQuantity')} type="number" value={form.min_quantity} onChange={(e) => setForm({ ...form, min_quantity: e.target.value })} />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Rasm</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('medicine.image')}</label>
             <div className="flex items-center gap-4 mt-1">
               <input type="file" accept="image/*" onChange={handleImageChange} className="text-sm" />
               {imagePreview && (
@@ -306,7 +308,7 @@ export default function MedicinesPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Faol</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('medicine.active')}</label>
             <button
               type="button"
               onClick={() => setForm({ ...form, is_active: !form.is_active })}
@@ -316,18 +318,18 @@ export default function MedicinesPage() {
             </button>
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tavsif</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('medicine.description')}</label>
             <textarea className="flex h-20 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-medical-500 mt-1" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
           <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" type="button" onClick={() => setShowModal(false)}>Bekor qilish</Button>
-            <Button type="submit">{editing ? 'Saqlash' : "Qo'shish"}</Button>
+            <Button variant="outline" type="button" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
+            <Button type="submit">{editing ? t('common.save') : t('common.add')}</Button>
           </div>
         </form>
       </Modal>
 
       <Modal isOpen={!!showBatches} onClose={() => setShowBatches(null)} title={`Partiyalar: ${showBatches?.name || ''}`} size="lg">
-        <DataTable columns={batchColumns} data={batches} emptyMessage="Partiyalar mavjud emas" />
+        <DataTable columns={batchColumns} data={batches} emptyMessage={t('medicine.batchNoData')} />
       </Modal>
     </div>
   )

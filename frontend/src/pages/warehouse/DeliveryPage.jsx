@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ordersAPI, deliveryAPI } from '@/services/api'
 import { DataTable } from '@/components/ui/DataTable'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -11,7 +12,7 @@ import { MapPin, Truck, Download } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
-const downloadExcel = (apiMethod, filename) => async () => {
+const downloadExcel = (apiMethod, filename, t) => async () => {
   try {
     const res = await apiMethod()
     const url = window.URL.createObjectURL(new Blob([res.data]))
@@ -22,9 +23,9 @@ const downloadExcel = (apiMethod, filename) => async () => {
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-    toast.success('Yuklab olindi')
+    toast.success(t('common.downloaded'))
   } catch (err) {
-    toast.error('Xatolik yuz berdi')
+    toast.error(t('common.error'))
   }
 }
 
@@ -48,19 +49,20 @@ const courierIcon = L.icon({
   shadowSize: [41, 41],
 })
 
-const statusBadge = (status) => {
+const statusBadge = (status, t) => {
   const variants = {
     pending: 'warning', assigned: 'info', picked: 'info',
     in_transit: 'info', delivered: 'success', cancelled: 'danger',
   }
   const labels = {
-    pending: 'Kutilmoqda', assigned: 'Kuryer biriktirildi', picked: 'Olindi',
-    in_transit: "Yo'lda", delivered: 'Yetkazildi', cancelled: 'Bekor qilindi',
+    pending: t('pharmacy.pending'), assigned: t('delivery.assigned'), picked: t('delivery.picked'),
+    in_transit: t('delivery.inTransit'), delivered: t('pharmacy.delivered'), cancelled: t('pharmacy.cancelled'),
   }
   return <Badge variant={variants[status] || 'default'}>{labels[status] || status}</Badge>
 }
 
 export default function DeliveryPage() {
+  const { t } = useTranslation()
   const [orders, setOrders] = useState([])
   const [deliveries, setDeliveries] = useState([])
   const [loading, setLoading] = useState(true)
@@ -75,7 +77,7 @@ export default function DeliveryPage() {
       const res = await ordersAPI.list({ page_size: 100 })
       setOrders(res.data.results || res.data)
     } catch (err) {
-      toast.error('Buyurtmalarni yuklashda xatolik')
+      toast.error(t('delivery.errorLoadOrders'))
     } finally { if (deliveries.length) setLoading(false) }
   }
 
@@ -92,32 +94,32 @@ export default function DeliveryPage() {
   const handleStatusUpdate = async (orderId, status) => {
     try {
       await ordersAPI.updateStatus(orderId, { status })
-      toast.success('Holat yangilandi')
+      toast.success(t('common.statusUpdated'))
       fetchOrders()
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Xatolik')
+      toast.error(err.response?.data?.error || t('common.error'))
     }
   }
 
   const handleCreateDelivery = async (orderId) => {
     try {
       await deliveryAPI.create({ order: orderId })
-      toast.success('Yetkazib berish yaratildi')
+      toast.success(t('delivery.created'))
       fetchOrders()
     } catch (err) {
-      toast.error('Xatolik')
+      toast.error(t('common.error'))
     }
   }
 
   const columns = [
-    { key: 'order_number', label: 'Buyurtma raqami' },
-    { key: 'pharmacy_name', label: 'Dorixona' },
-    { key: 'pharmacy_phone', label: 'Telefon' },
-    { key: 'created_at', label: 'Vaqt', render: (r) => formatDateTime(r.created_at) },
-    { key: 'total_items', label: 'Mahsulot soni' },
+    { key: 'order_number', label: t('pharmacy.orderNumber') },
+    { key: 'pharmacy_name', label: t('dashboard.pharmacy') },
+    { key: 'pharmacy_phone', label: t('pharmacy.phone') },
+    { key: 'created_at', label: t('pharmacy.time'), render: (r) => formatDateTime(r.created_at) },
+    { key: 'total_items', label: t('delivery.totalItems') },
     {
-      key: 'status', label: 'Holati',
-      render: (r) => statusBadge(r.status),
+      key: 'status', label: t('medicine.status'),
+      render: (r) => statusBadge(r.status, t),
     },
     {
       key: 'actions', label: '',
@@ -125,17 +127,17 @@ export default function DeliveryPage() {
         <div className="flex gap-2">
           {r.status === 'pending' && (
             <Button size="sm" variant="outline" onClick={() => handleStatusUpdate(r.id, 'confirmed')}>
-              Tasdiqlash
+              {t('pharmacy.approve')}
             </Button>
           )}
           {r.status === 'confirmed' && (
             <Button size="sm" variant="outline" onClick={() => handleStatusUpdate(r.id, 'preparing')}>
-              Tayyorlash
+              {t('delivery.prepare')}
             </Button>
           )}
           {r.status === 'preparing' && (
             <Button size="sm" variant="outline" onClick={() => { handleStatusUpdate(r.id, 'shipped'); handleCreateDelivery(r.id) }}>
-              <Truck className="h-4 w-4 mr-1" /> Yo'lga chiqdi
+              <Truck className="h-4 w-4 mr-1" /> {t('delivery.onTheWay')}
             </Button>
           )}
           {r.pharmacy_latitude && r.pharmacy_longitude && (
@@ -152,15 +154,15 @@ export default function DeliveryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Yetkazib berish</h1>
-          <p className="text-gray-500 mt-1">Barcha buyurtmalar va yetkazib berish holati</p>
+          <h1 className="text-2xl font-bold">{t('warehouse.delivery')}</h1>
+          <p className="text-gray-500 mt-1">{t('warehouse.deliveryDesc')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={downloadExcel(ordersAPI.exportExcel, 'buyurtmalar.xlsx')}>
-            <Download className="h-4 w-4 mr-1" /> Buyurtmalar
+          <Button variant="outline" size="sm" onClick={downloadExcel(ordersAPI.exportExcel, 'buyurtmalar.xlsx', t)}>
+            <Download className="h-4 w-4 mr-1" /> {t('delivery.orders')}
           </Button>
-          <Button variant="outline" size="sm" onClick={downloadExcel(deliveryAPI.exportExcel, 'yetkazib_berish.xlsx')}>
-            <Download className="h-4 w-4 mr-1" /> Yetkazib berish
+          <Button variant="outline" size="sm" onClick={downloadExcel(deliveryAPI.exportExcel, 'yetkazib_berish.xlsx', t)}>
+            <Download className="h-4 w-4 mr-1" /> {t('warehouse.delivery')}
           </Button>
         </div>
       </div>
@@ -171,7 +173,7 @@ export default function DeliveryPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={showMap} onClose={() => setShowMap(false)} title={selectedOrder?.pharmacy_name || 'Xarita'} size="xl">
+      <Modal isOpen={showMap} onClose={() => setShowMap(false)} title={selectedOrder?.pharmacy_name || t('common.map')} size="xl">
         {selectedOrder?.pharmacy_latitude && selectedOrder?.pharmacy_longitude && (
           <div className="h-96 w-full rounded-lg overflow-hidden">
             <MapContainer
@@ -190,7 +192,7 @@ export default function DeliveryPage() {
                 <Popup>
                   <strong>{selectedOrder.pharmacy_name}</strong><br />
                   {selectedOrder.pharmacy_phone}<br />
-                  <span className="text-xs text-gray-500">Dorixona</span><br />
+                  <span className="text-xs text-gray-500">{t('dashboard.pharmacy')}</span><br />
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${selectedOrder.pharmacy_latitude},${selectedOrder.pharmacy_longitude}`}
                     target="_blank" rel="noopener noreferrer"
@@ -214,17 +216,17 @@ export default function DeliveryPage() {
                   icon={courierIcon}
                 >
                   <Popup>
-                    <strong>Kuryer</strong><br />
-                    {selectedDelivery.courier_name || 'Noma\'lum'}<br />
+                    <strong>{t('delivery.courier')}</strong><br />
+                    {selectedDelivery.courier_name || t('common.unknown')}<br />
                     <span className="text-xs text-gray-500">
-                      Oxirgi yangilanish: {formatDateTime(selectedDelivery.courier_location_updated_at)}
+                      {t('delivery.lastUpdate')}: {formatDateTime(selectedDelivery.courier_location_updated_at)}
                     </span><br />
                     <a
                       href={`https://www.google.com/maps/dir/?api=1&origin=${selectedDelivery.courier_lat},${selectedDelivery.courier_lng}&destination=${selectedOrder.pharmacy_latitude},${selectedOrder.pharmacy_longitude}`}
                       target="_blank" rel="noopener noreferrer"
                       className="text-blue-600 underline text-sm"
                     >
-                      Kuryerdan dorixonaga yo'nalish
+                      {t('delivery.courierRoute')}
                     </a>
                   </Popup>
                 </Marker>

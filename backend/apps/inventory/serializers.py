@@ -1,4 +1,6 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+
 from .models import Inventory, InventoryCount
 
 
@@ -23,6 +25,7 @@ class InventoryCountSerializer(serializers.ModelSerializer):
         fields = ['id', 'medicine', 'medicine_name', 'actual_quantity', 'system_quantity', 'difference',
                   'note', 'counted_by', 'counted_by_name', 'created_at']
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_counted_by_name(self, obj):
         if obj.counted_by:
             return f'{obj.counted_by.first_name} {obj.counted_by.last_name}'

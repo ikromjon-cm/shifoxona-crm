@@ -73,6 +73,9 @@ export const medicinesAPI = {
   get: (id) => api.get(`/medicines/medicines/${id}/`),
   update: (id, data) => api.patch(`/medicines/medicines/${id}/`, data),
   delete: (id) => api.delete(`/medicines/medicines/${id}/`),
+  importExcel: (data) => api.post('/medicines/medicines/import_excel/', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
 }
 
 export const batchesAPI = {
@@ -92,24 +95,6 @@ export const suppliersAPI = {
   create: (data) => api.post('/medicines/suppliers/', data),
   update: (id, data) => api.patch(`/medicines/suppliers/${id}/`, data),
   delete: (id) => api.delete(`/medicines/suppliers/${id}/`),
-}
-
-export const warehouseAPI = {
-  income: {
-    list: (params) => api.get('/warehouse/income/', { params }),
-    create: (data) => api.post('/warehouse/income/', data),
-    get: (id) => api.get(`/warehouse/income/${id}/`),
-    delete: (id) => api.delete(`/warehouse/income/${id}/`),
-  },
-  expense: {
-    list: (params) => api.get('/warehouse/expense/', { params }),
-    create: (data) => api.post('/warehouse/expense/', data),
-    get: (id) => api.get(`/warehouse/expense/${id}/`),
-    delete: (id) => api.delete(`/warehouse/expense/${id}/`),
-  },
-  movements: {
-    list: (params) => api.get('/warehouse/movements/', { params }),
-  },
 }
 
 export const pharmaciesAPI = {
@@ -171,4 +156,141 @@ export const notificationsAPI = {
 export const auditLogsAPI = {
   list: (params) => api.get('/audit-logs/logs/', { params }),
   get: (id) => api.get(`/audit-logs/logs/${id}/`),
+}
+
+export const tasksAPI = {
+  list: (params) => api.get('/tasks/tasks/', { params }),
+  create: (data) => api.post('/tasks/tasks/', data),
+  get: (id) => api.get(`/tasks/tasks/${id}/`),
+  update: (id, data) => api.patch(`/tasks/tasks/${id}/`, data),
+  delete: (id) => api.delete(`/tasks/tasks/${id}/`),
+  myTasks: (params) => api.get('/tasks/tasks/my_tasks/', { params }),
+  start: (id) => api.post(`/tasks/tasks/${id}/start/`),
+  complete: (id) => api.post(`/tasks/tasks/${id}/complete/`),
+  cancel: (id) => api.post(`/tasks/tasks/${id}/cancel/`),
+  comment: (id, data) => api.post(`/tasks/tasks/${id}/comment/`, data),
+  upload: (id, data) => api.post(`/tasks/tasks/${id}/upload/`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  stats: () => api.get('/tasks/tasks/stats/'),
+}
+
+export const attendanceAPI = {
+  shifts: {
+    list: (params) => api.get('/attendance/shifts/', { params }),
+    create: (data) => api.post('/attendance/shifts/', data),
+    update: (id, data) => api.patch(`/attendance/shifts/${id}/`, data),
+    delete: (id) => api.delete(`/attendance/shifts/${id}/`),
+  },
+  geofences: {
+    list: (params) => api.get('/attendance/geofences/', { params }),
+    create: (data) => api.post('/attendance/geofences/', data),
+    update: (id, data) => api.patch(`/attendance/geofences/${id}/`, data),
+    delete: (id) => api.delete(`/attendance/geofences/${id}/`),
+  },
+  records: {
+    list: (params) => api.get('/attendance/records/', { params }),
+    create: (data) => api.post('/attendance/records/', data),
+    myRecords: (params) => api.get('/attendance/records/my_records/', { params }),
+    checkIn: (data) => api.post('/attendance/records/check_in/', data),
+    checkOut: (data) => api.post('/attendance/records/check_out/', data),
+    qrScan: (data) => api.post('/attendance/records/qr_scan/', data),
+  },
+  sessions: {
+    list: (params) => api.get('/attendance/sessions/', { params }),
+    mySessions: (params) => api.get('/attendance/sessions/my_sessions/', { params }),
+    today: () => api.get('/attendance/sessions/today/'),
+  },
+  leaves: {
+    list: (params) => api.get('/attendance/leaves/', { params }),
+    create: (data) => api.post('/attendance/leaves/', data),
+    approve: (id) => api.post(`/attendance/leaves/${id}/approve/`),
+    reject: (id) => api.post(`/attendance/leaves/${id}/reject/`),
+    myLeaves: (params) => api.get('/attendance/leaves/my_leaves/', { params }),
+  },
+}
+
+export const chatAPI = {
+  rooms: {
+    list: (params) => api.get('/chat/rooms/', { params }),
+    create: (data) => api.post('/chat/rooms/', data),
+    get: (id) => api.get(`/chat/rooms/${id}/`),
+    delete: (id) => api.delete(`/chat/rooms/${id}/`),
+    addMember: (id, data) => api.post(`/chat/rooms/${id}/add_member/`, data),
+    myRooms: () => api.get('/chat/rooms/my_rooms/'),
+    unreadTotal: () => api.get('/chat/rooms/unread_total/'),
+  },
+  messages: {
+    list: (roomId, params) => api.get(`/chat/rooms/${roomId}/messages/`, { params }),
+    send: (roomId, data) => api.post(`/chat/rooms/${roomId}/send/`, data),
+    markRead: (roomId) => api.post(`/chat/rooms/${roomId}/mark_read/`),
+  },
+}
+
+export const warehouseAPI = {
+  income: {
+    list: (params) => api.get('/warehouse/income/', { params }),
+    create: (data) => api.post('/warehouse/income/', data),
+    get: (id) => api.get(`/warehouse/income/${id}/`),
+    delete: (id) => api.delete(`/warehouse/income/${id}/`),
+    scan: (data) => api.post('/warehouse/income/scan/', data),
+    bulk: (data) => api.post('/warehouse/income/bulk/', data),
+  },
+  expense: {
+    list: (params) => api.get('/warehouse/expense/', { params }),
+    create: (data) => api.post('/warehouse/expense/', data),
+    get: (id) => api.get(`/warehouse/expense/${id}/`),
+    delete: (id) => api.delete(`/warehouse/expense/${id}/`),
+    scan: (data) => api.post('/warehouse/expense/scan/', data),
+    bulk: (data) => api.post('/warehouse/expense/bulk/', data),
+  },
+  movements: {
+    list: (params) => api.get('/warehouse/movements/', { params }),
+  },
+  bins: {
+    list: (params) => api.get('/warehouse/bins/', { params }),
+    create: (data) => api.post('/warehouse/bins/', data),
+    get: (id) => api.get(`/warehouse/bins/${id}/`),
+    update: (id, data) => api.patch(`/warehouse/bins/${id}/`, data),
+    delete: (id) => api.delete(`/warehouse/bins/${id}/`),
+    label: (id) => api.get(`/warehouse/bins/${id}/label/`, { responseType: 'blob' }),
+    printLabels: (data) => api.post('/warehouse/bins/print_labels/', data, { responseType: 'blob' }),
+  },
+  zones: {
+    list: (params) => api.get('/warehouse/zones/', { params }),
+    create: (data) => api.post('/warehouse/zones/', data),
+    update: (id, data) => api.patch(`/warehouse/zones/${id}/`, data),
+    delete: (id) => api.delete(`/warehouse/zones/${id}/`),
+  },
+  pickWaves: {
+    list: (params) => api.get('/warehouse/pick-waves/', { params }),
+    create: (data) => api.post('/warehouse/pick-waves/', data),
+    get: (id) => api.get(`/warehouse/pick-waves/${id}/`),
+    update: (id, data) => api.patch(`/warehouse/pick-waves/${id}/`, data),
+  },
+  pickOrders: {
+    list: (params) => api.get('/warehouse/pick-orders/', { params }),
+    get: (id) => api.get(`/warehouse/pick-orders/${id}/`),
+    assignPicker: (id, data) => api.post(`/warehouse/pick-orders/${id}/assign_picker/`, data),
+    start: (id) => api.post(`/warehouse/pick-orders/${id}/start_picking/`),
+    complete: (id) => api.post(`/warehouse/pick-orders/${id}/complete_picking/`),
+    printPickList: (id) => api.get(`/warehouse/pick-orders/${id}/print_pick_list/`, { responseType: 'blob' }),
+  },
+}
+
+export const rbacAPI = {
+  roles: {
+    list: (params) => api.get('/rbac/roles/', { params }),
+    create: (data) => api.post('/rbac/roles/', data),
+    get: (id) => api.get(`/rbac/roles/${id}/`),
+    update: (id, data) => api.patch(`/rbac/roles/${id}/`, data),
+    delete: (id) => api.delete(`/rbac/roles/${id}/`),
+  },
+  permissions: {
+    list: (params) => api.get('/rbac/permissions/', { params }),
+  },
+}
+
+export const adminDashboardAPI = {
+  get: () => api.get('/reports/admin-dashboard/'),
 }

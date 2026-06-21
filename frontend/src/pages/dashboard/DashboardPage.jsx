@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { reportsAPI } from '@/services/api'
 import StatCard from '@/components/ui/StatCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -11,7 +12,7 @@ import {
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell,
+  ResponsiveContainer, PieChart, Pie, Cell,
   AreaChart, Area
 } from 'recharts'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
@@ -46,12 +47,8 @@ const pharmacyIcon = new L.DivIcon({
   popupAnchor: [0, -36],
 })
 
-const GradientBar = (props) => {
-  const { fill, ...rest } = props
-  return <Bar {...rest} fill={fill} />
-}
-
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -62,9 +59,7 @@ export default function DashboardPage() {
     try {
       const res = await reportsAPI.dashboard()
       setData(res.data)
-    } catch (err) {
-      console.error('Dashboard error:', err)
-    } finally {
+    } catch (err) { /* empty */ } finally {
       setLoading(false)
       setRefreshing(false)
     }
@@ -89,18 +84,18 @@ export default function DashboardPage() {
   })) || []
 
   const statCards = [
-    { title: 'Jami mahsulotlar', value: data?.total_medicines || 0, icon: Package, color: 'medical', key: 'medicines' },
-    { title: 'Ombordagi soni', value: data?.total_quantity || 0, icon: Pill, color: 'emerald', key: 'quantity' },
-    { title: 'Bugungi kirim', value: (data?.today_income || 0).toLocaleString() + " so'm", icon: TrendingUp, color: 'amber', key: 'income' },
-    { title: 'Bugungi chiqim', value: (data?.today_expense || 0).toLocaleString() + " so'm", icon: TrendingDown, color: 'rose', key: 'expense' },
-    { title: 'Kam qoldiq', value: data?.low_stock || 0, icon: AlertTriangle, color: 'rose', key: 'lowstock' },
-    { title: 'Muddati yaqin', value: data?.expiring_soon || 0, icon: Clock, color: 'amber', key: 'expiring' },
-    { title: 'Dorixonalar', value: data?.total_pharmacies || 0, icon: Building2, color: 'violet', key: 'pharmacies' },
-    { title: 'Faol dorixonalar', value: data?.total_pharmacies_active || 0, icon: Store, color: 'emerald', key: 'active' },
-    { title: 'Bugungi buyurtmalar', value: data?.today_orders || 0, icon: ShoppingCart, color: 'amber', key: 'todayorders' },
-    { title: 'Kutilayotgan', value: data?.pending_orders || 0, icon: Clock, color: 'rose', key: 'pending' },
-    { title: 'Yetkazilgan', value: data?.delivered_orders || 0, icon: Package, color: 'medical', key: 'delivered' },
-    { title: 'Qabul qilingan', value: data?.received_orders || 0, icon: CheckCircle, color: 'emerald', key: 'received' },
+    { title: t('dashboard.totalMedicines'), value: data?.total_medicines || 0, icon: Package, color: 'medical', key: 'medicines' },
+    { title: t('dashboard.totalStock'), value: data?.total_quantity || 0, icon: Pill, color: 'emerald', key: 'quantity' },
+    { title: t('dashboard.todayIncome'), value: (data?.today_income || 0).toLocaleString() + " so'm", icon: TrendingUp, color: 'amber', key: 'income' },
+    { title: t('dashboard.todayExpense'), value: (data?.today_expense || 0).toLocaleString() + " so'm", icon: TrendingDown, color: 'rose', key: 'expense' },
+    { title: t('dashboard.lowStock'), value: data?.low_stock || 0, icon: AlertTriangle, color: 'rose', key: 'lowstock' },
+    { title: t('dashboard.expiringSoon'), value: data?.expiring_soon || 0, icon: Clock, color: 'amber', key: 'expiring' },
+    { title: t('dashboard.pharmacies'), value: data?.total_pharmacies || 0, icon: Building2, color: 'violet', key: 'pharmacies' },
+    { title: t('dashboard.activePharmacies'), value: data?.total_pharmacies_active || 0, icon: Store, color: 'emerald', key: 'active' },
+    { title: t('dashboard.todayOrders'), value: data?.today_orders || 0, icon: ShoppingCart, color: 'amber', key: 'todayorders' },
+    { title: t('dashboard.pending'), value: data?.pending_orders || 0, icon: Clock, color: 'rose', key: 'pending' },
+    { title: t('dashboard.delivered'), value: data?.delivered_orders || 0, icon: Package, color: 'medical', key: 'delivered' },
+    { title: t('dashboard.received'), value: data?.received_orders || 0, icon: CheckCircle, color: 'emerald', key: 'received' },
   ]
 
   if (loading) {
@@ -111,7 +106,7 @@ export default function DashboardPage() {
             <div className="absolute inset-0 rounded-full border-4 border-medical-200 dark:border-medical-900" />
             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-medical-500 animate-spin" />
           </div>
-          <p className="text-sm text-gray-500 animate-pulse">Dashboard yuklanmoqda...</p>
+          <p className="text-sm text-gray-500 animate-pulse">{t('dashboard.loading')}</p>
         </div>
       </div>
     )
@@ -122,8 +117,8 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold gradient-text">Dashboard</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Asosiy statistika va ma'lumotlar</p>
+          <h1 className="text-3xl font-bold gradient-text">{t('dashboard.title')}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('dashboard.subtitle')}</p>
         </div>
         <button
           onClick={() => fetchDashboard(true)}
@@ -131,7 +126,7 @@ export default function DashboardPage() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all disabled:opacity-50"
         >
           <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
-          Yangilash
+          {t('dashboard.refresh')}
         </button>
       </div>
 
@@ -153,9 +148,9 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-medical-500" />
-                  Dorixonalar xaritasi
+                  {t('dashboard.map')}
                 </CardTitle>
-                <span className="text-xs text-gray-400">{data.pharmacy_locations.length} ta dorixona</span>
+                <span className="text-xs text-gray-400">{data.pharmacy_locations.length} {t('dashboard.countPharmacies')}</span>
               </div>
             </CardHeader>
             <CardContent>
@@ -177,7 +172,7 @@ export default function DashboardPage() {
                             target="_blank" rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-medical-500 hover:text-medical-600"
                           >
-                            Navigatsiya <ChevronRight className="h-3 w-3" />
+                            {t('dashboard.navigation')} <ChevronRight className="h-3 w-3" />
                           </a>
                         </div>
                       </Popup>
@@ -200,7 +195,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Activity className="h-4 w-4 text-medical-500" />
-              Oylik kirim/chiqim
+              {t('dashboard.monthlyChart')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -232,7 +227,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Pie className="h-4 w-4 text-brand-500" />
-              Eng ko'p tarqatilgan mahsulotlar
+              {t('dashboard.topProducts')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -270,7 +265,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <TrendingUp className="h-4 w-4 text-emerald-500" />
-              Oylik trend
+              {t('dashboard.monthlyTrend')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -304,18 +299,18 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Package className="h-4 w-4 text-medical-500" />
-              Eng ko'p tarqatilgan mahsulotlar
+              {t('dashboard.topProducts')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <DataTable
               columns={[
-                { key: 'medicine__name', label: 'Mahsulot nomi' },
-                { key: 'total_qty', label: 'Miqdor' },
-                { key: 'total_amount', label: 'Summa', render: (row) => Number(row.total_amount).toLocaleString() + " so'm" },
+                { key: 'medicine__name', label: t('dashboard.productName') },
+                { key: 'total_qty', label: t('dashboard.quantity') },
+                { key: 'total_amount', label: t('dashboard.amount'), render: (row) => Number(row.total_amount).toLocaleString() + " so'm" },
               ]}
               data={data?.top_medicines || []}
-              emptyMessage="Ma'lumot topilmadi"
+              emptyMessage={t('common.noData')}
             />
           </CardContent>
         </Card>
@@ -325,18 +320,18 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Store className="h-4 w-4 text-brand-500" />
-                Eng ko'p buyurtma bergan dorixonalar
+                {t('dashboard.topPharmacies')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <DataTable
                 columns={[
-                  { key: 'pharmacy__name', label: 'Dorixona' },
-                  { key: 'total_orders', label: 'Buyurtmalar' },
-                  { key: 'total_amount', label: 'Summa', render: (row) => Number(row.total_amount).toLocaleString() + " so'm" },
+                  { key: 'pharmacy__name', label: t('dashboard.pharmacy') },
+                  { key: 'total_orders', label: t('dashboard.orders') },
+                  { key: 'total_amount', label: t('dashboard.amount'), render: (row) => Number(row.total_amount).toLocaleString() + " so'm" },
                 ]}
                 data={data?.top_pharmacies || []}
-                emptyMessage="Ma'lumot topilmadi"
+                emptyMessage={t('common.noData')}
               />
             </CardContent>
           </Card>

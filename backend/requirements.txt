@@ -13,5 +13,12 @@ qrcode==8.0
 drf-spectacular==0.28.0
 python-telegram-bot==21.9
 gunicorn==23.0.0
+daphne==4.1.2
+channels==4.2.0
+channels-redis==4.2.1
 whitenoise==6.8.2
-drf-yasg==1.21.8
+sentry-sdk==2.22.0
+firebase-admin==6.7.0
+redis==5.2.1
+django-apscheduler==0.7.0
+apscheduler==3.11.2

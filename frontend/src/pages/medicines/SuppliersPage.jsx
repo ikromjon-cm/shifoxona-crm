@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { suppliersAPI } from '@/services/api'
 import { DataTable } from '@/components/ui/DataTable'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -15,6 +16,7 @@ import { REGIONS } from '@/data/uzbekistan'
 const defaultForm = { name: '', contact_person: '', phone: '', email: '', region: '', district: '', address: '', latitude: null, longitude: null }
 
 export default function SuppliersPage() {
+  const { t } = useTranslation()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -28,7 +30,7 @@ export default function SuppliersPage() {
       const res = await suppliersAPI.list()
       setData(res.data.results || res.data)
     } catch (err) {
-      toast.error('Yetkazib beruvchilarni yuklashda xatolik')
+      toast.error(t('supplier.errorLoad'))
     } finally { setLoading(false) }
   }
 
@@ -37,10 +39,10 @@ export default function SuppliersPage() {
     try {
       if (editing) {
         await suppliersAPI.update(editing.id, form)
-        toast.success('Yetkazib beruvchi yangilandi')
+        toast.success(t('supplier.updated'))
       } else {
         await suppliersAPI.create(form)
-        toast.success("Yetkazib beruvchi qo'shildi")
+        toast.success(t('supplier.added'))
       }
       setShowModal(false)
       setEditing(null)
@@ -50,9 +52,9 @@ export default function SuppliersPage() {
       const msg = err.response?.data
       if (msg && typeof msg === 'object') {
         const txt = Object.values(msg).flat().join('; ')
-        toast.error(txt || 'Xatolik')
+        toast.error(txt || t('common.error'))
       } else {
-        toast.error('Xatolik yuz berdi')
+        toast.error(t('common.error'))
       }
     }
   }
@@ -74,13 +76,13 @@ export default function SuppliersPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm("O'chirilsinmi?")) return
+    if (!confirm(t('common.confirm') + '?')) return
     try {
       await suppliersAPI.delete(id)
-      toast.success("O'chirildi")
+      toast.success(t('category.deleted'))
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Xatolik')
+      toast.error(err.response?.data?.detail || t('common.error'))
     }
   }
 
@@ -89,14 +91,14 @@ export default function SuppliersPage() {
   }
 
   const columns = [
-    { key: 'name', label: 'Nomi' },
-    { key: 'contact_person', label: "Aloqa shaxsi" },
-    { key: 'phone', label: 'Telefon' },
-    { key: 'email', label: 'Email' },
-    { key: 'region', label: 'Viloyat', render: (r) => REGIONS.find(reg => reg.value === r.region)?.label || r.region },
+    { key: 'name', label: t('supplier.name') },
+    { key: 'contact_person', label: t('supplier.contactPerson') },
+    { key: 'phone', label: t('profile.phone') },
+    { key: 'email', label: t('supplier.email') },
+    { key: 'region', label: t('supplier.region'), render: (r) => REGIONS.find(reg => reg.value === r.region)?.label || r.region },
     {
-      key: 'is_active', label: 'Holat',
-      render: (row) => <Badge variant={row.is_active ? 'success' : 'danger'}>{row.is_active ? 'Faol' : 'Faol emas'}</Badge>
+      key: 'is_active', label: t('medicine.status'),
+      render: (row) => <Badge variant={row.is_active ? 'success' : 'danger'}>{row.is_active ? t('medicine.statusActive') : t('medicine.statusInactive')}</Badge>
     },
     {
       key: 'actions', label: '',
@@ -117,23 +119,23 @@ export default function SuppliersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Yetkazib beruvchilar</h1>
-          <p className="text-gray-500 mt-1">Yetkazib beruvchilarni boshqarish</p>
+          <h1 className="text-2xl font-bold">{t('supplier.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('supplier.subtitle')}</p>
         </div>
         <Button onClick={() => { setEditing(null); setForm({ ...defaultForm }); setShowModal(true) }}>
-          <Plus className="h-4 w-4 mr-2" /> Yangi yetkazib beruvchi
+          <Plus className="h-4 w-4 mr-2" /> {t('supplier.newItem')}
         </Button>
       </div>
       <Card><CardContent className="p-6">
         <DataTable columns={columns} data={data} loading={loading} />
       </CardContent></Card>
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Yetkazib beruvchini tahrirlash' : 'Yangi yetkazib beruvchi'} size="lg">
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? t('supplier.editTitle') : t('supplier.newTitle')} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="Nomi" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-          <Input label="Aloqa shaxsi" value={form.contact_person} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} />
-          <Input label="Telefon" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
-          <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <Input label={t('supplier.name')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+          <Input label={t('supplier.contactPerson')} value={form.contact_person} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} />
+          <Input label={t('profile.phone')} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
+          <Input label={t('supplier.email')} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <RegionDistrictPicker
             region={form.region}
             district={form.district}
@@ -141,12 +143,12 @@ export default function SuppliersPage() {
             onDistrictChange={(v) => setForm(prev => ({ ...prev, district: v }))}
           />
           <div>
-            <label className="text-sm font-medium mb-1 block">Manzil (ko'cha, uy)</label>
+            <label className="text-sm font-medium mb-1 block">{t('supplier.address')}</label>
             <textarea className="flex h-20 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-medical-500" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
           </div>
           <div>
             <label className="text-sm font-medium mb-1 block flex items-center gap-1">
-              <MapPin className="h-4 w-4" /> Xaritadan joy belgilash
+              <MapPin className="h-4 w-4" /> {t('supplier.location')}
             </label>
             <LocationPicker
               position={form.latitude && form.longitude ? { lat: form.latitude, lng: form.longitude } : null}
@@ -154,13 +156,13 @@ export default function SuppliersPage() {
             />
             {form.latitude && form.longitude && (
               <p className="text-xs text-gray-500 mt-1">
-                Kenglik: {form.latitude.toFixed(4)}, Uzunlik: {form.longitude.toFixed(4)}
+                {t('supplier.latitude')}: {form.latitude.toFixed(4)}, {t('supplier.longitude')}: {form.longitude.toFixed(4)}
               </p>
             )}
           </div>
           <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" type="button" onClick={() => setShowModal(false)}>Bekor qilish</Button>
-            <Button type="submit">{editing ? 'Saqlash' : "Qo'shish"}</Button>
+            <Button variant="outline" type="button" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
+            <Button type="submit">{editing ? t('common.save') : t('common.add')}</Button>
           </div>
         </form>
       </Modal>

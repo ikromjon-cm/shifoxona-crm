@@ -1,39 +1,49 @@
-from rest_framework import viewsets, status, permissions
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from django.db import transaction
-from django.utils import timezone
-from django.contrib.auth import get_user_model
-from django.http import HttpResponse
 import openpyxl
-from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
-from .models import Order, OrderItem
-from .serializers import (
-    OrderListSerializer, OrderDetailSerializer, OrderCreateSerializer,
-    OrderStatusSerializer, OrderReceiveSerializer
-)
-from apps.accounts.permissions import IsSuperAdmin
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.http import HttpResponse
+from django.utils import timezone
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from apps.accounts.permissions import IsAdminOrOperatorOrPharmacy
 from apps.notifications.models import Notification
+
+from .models import Order
+from .serializers import (
+    OrderCreateSerializer,
+    OrderDetailSerializer,
+    OrderListSerializer,
+    OrderReceiveSerializer,
+    OrderStatusSerializer,
+)
 
 User = get_user_model()
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    queryset = Order.objects.none()
+    permission_classes = [IsAdminOrOperatorOrPharmacy]
 
     def get_serializer_class(self):
         if self.action == 'create':
             return OrderCreateSerializer
-        elif self.action in ['list', 'retrieve'] and self.request.user.role == 'pharmacy':
-            return OrderListSerializer if self.action == 'list' else OrderDetailSerializer
-        elif self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve']:
             return OrderListSerializer if self.action == 'list' else OrderDetailSerializer
         return OrderCreateSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Order.objects.none()
         user = self.request.user
+        if user.is_anonymous:
+            return Order.objects.none()
         qs = Order.objects.select_related('pharmacy', 'created_by')
-        if user.role == 'pharmacy':
+        if user.is_super_admin:
+            pass
+        elif user.role == 'pharmacy':
             if hasattr(user, 'pharmacy_profile'):
                 qs = qs.filter(pharmacy=user.pharmacy_profile)
             else:
@@ -120,7 +130,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 type='system',
                 title='Buyurtma qabul qilindi',
                 message=f'{order.order_number} - {order.pharmacy.name} tomonidan qabul qilindi',
-                link=f'/warehouse/delivery',
+                link='/warehouse/delivery',
             )
 
         return Response(OrderDetailSerializer(order, context={'request': request}).data)
@@ -180,3 +190,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = 'attachment; filename="buyurtmalar.xlsx"'
         wb.save(response)
         return response
+
+    @action(detail=True, methods=['get'])
+    def invoice(self, request, pk=None):
+        order = self.get_object()
+        from apps.warehouse.utils.print_documents import generate_invoice_pdf
+        pdf_buffer = generate_invoice_pdf(order)
+        return HttpResponse(pdf_buffer.read(), content_type='application/pdf',
+                            headers={'Content-Disposition': f'inline; filename="invoice_{order.order_number}.pdf"'})

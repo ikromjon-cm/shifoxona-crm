@@ -63,7 +63,7 @@ export default function StatCard({ title, value, icon: Icon, color = 'medical', 
                 )}>
                   {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
                 </span>
-                <span className="text-xs text-gray-400">o'tgan oy</span>
+                <span className="text-xs text-gray-400">o&apos;tgan oy</span>
               </div>
             )}
           </div>

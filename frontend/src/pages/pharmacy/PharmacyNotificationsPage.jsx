@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { notificationsAPI } from '@/services/api'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -8,6 +9,7 @@ import { formatDateTime } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 export default function PharmacyNotificationsPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -34,7 +36,7 @@ export default function PharmacyNotificationsPage() {
     try {
       await notificationsAPI.markAllRead()
       fetchNotifications()
-      toast.success('Barchasi o\'qildi')
+      toast.success(t('notification.markAllRead'))
     } catch { /* ignore */ }
   }
 
@@ -47,11 +49,11 @@ export default function PharmacyNotificationsPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Bildirishnomalar</h1>
+          <h1 className="text-2xl font-bold">{t('notification.title')}</h1>
         </div>
         {unreadCount > 0 && (
           <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
-            <CheckCheck className="h-4 w-4 mr-1" /> Barchasini o'qish
+            <CheckCheck className="h-4 w-4 mr-1" /> {t('notification.markRead')}
           </Button>
         )}
       </div>
@@ -65,7 +67,7 @@ export default function PharmacyNotificationsPage() {
           ) : notifications.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <Bell className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Bildirishnomalar mavjud emas</p>
+              <p>{t('notification.empty')}</p>
             </div>
           ) : (
             notifications.map(n => (

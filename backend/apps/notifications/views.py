@@ -1,18 +1,23 @@
-from rest_framework import viewsets, status, generics
-from rest_framework.response import Response
+from django.db import models
+from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from django.db import models
-from .models import Notification, NotificationSetting
-from .serializers import NotificationSerializer, NotificationSettingSerializer
-from apps.accounts.permissions import IsSuperAdmin
+from rest_framework.response import Response
+
+from .models import DeviceToken, Notification, NotificationSetting
+from .serializers import DeviceTokenSerializer, NotificationSerializer, NotificationSettingSerializer
 
 
 class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Notification.objects.none()
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Notification.objects.none()
+        if self.request.user.is_anonymous:
+            return Notification.objects.none()
         user = self.request.user
         if user.is_authenticated and user.is_super_admin:
             return Notification.objects.all()
@@ -42,3 +47,14 @@ class NotificationSettingView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         obj, _ = NotificationSetting.objects.get_or_create(user=self.request.user)
         return obj
+
+
+class DeviceTokenView(generics.CreateAPIView):
+    serializer_class = DeviceTokenSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        token = serializer.save()
+        return Response(DeviceTokenSerializer(token).data, status=status.HTTP_201_CREATED)

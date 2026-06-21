@@ -1,12 +1,21 @@
-from rest_framework import status, generics, permissions
+import random
+import string
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth import get_user_model
+
+from drf_spectacular.utils import extend_schema
+
+from .permissions import IsAdmin, IsSuperAdmin
 from .serializers import (
-    RegisterSerializer, LoginSerializer, UserSerializer,
-    UserCreateSerializer, get_tokens_for_user
+    ForgotPasswordSerializer, LoginSerializer, RegisterSerializer,
+    ResetPasswordSerializer, UserCreateSerializer, UserSerializer, get_tokens_for_user,
 )
-from .permissions import IsSuperAdmin
+from .models import PasswordResetCode
 
 User = get_user_model()
 
@@ -14,7 +23,7 @@ User = get_user_model()
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsSuperAdmin]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -30,6 +39,7 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
+    serializer_class = LoginSerializer
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
@@ -81,6 +91,7 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdmin]
 
 
+@extend_schema(exclude=True)
 class UserBlockView(APIView):
     permission_classes = [IsSuperAdmin]
 
@@ -95,6 +106,7 @@ class UserBlockView(APIView):
             return Response({'error': 'Foydalanuvchi topilmadi'}, status=status.HTTP_404_NOT_FOUND)
 
 
+@extend_schema(exclude=True)
 class UserUnblockView(APIView):
     permission_classes = [IsSuperAdmin]
 
@@ -107,6 +119,7 @@ class UserUnblockView(APIView):
             return Response({'error': 'Foydalanuvchi topilmadi'}, status=status.HTTP_404_NOT_FOUND)
 
 
+@extend_schema(exclude=True)
 class ChangePasswordView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -127,3 +140,73 @@ class ChangePasswordView(APIView):
         user.set_password(new_password)
         user.save()
         return Response({'message': 'Parol muvaffaqiyatli o\'zgartirildi'})
+
+
+class ForgotPasswordView(APIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = ForgotPasswordSerializer
+
+    def post(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = User.objects.get(login=serializer.validated_data['login'])
+
+        code = ''.join(random.choices(string.digits, k=6))
+        expires_at = timezone.now() + timedelta(minutes=15)
+
+        PasswordResetCode.objects.create(user=user, code=code, expires_at=expires_at)
+
+        return Response({
+            'message': 'Tiklash kodi yuborildi',
+            'code': code,
+            'expires_in': 15,
+        })
+
+
+class ResetPasswordView(APIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = ResetPasswordSerializer
+
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data['user']
+        reset = serializer.validated_data['reset']
+        new_password = serializer.validated_data['new_password']
+
+        user.set_password(new_password)
+        user.save()
+        reset.is_used = True
+        reset.save()
+
+        return Response({'message': 'Parol muvaffaqiyatli tiklandi'})
+
+
+from django.db.models import F
+from rest_framework.viewsets import ViewSet
+
+from apps.medicines.models import Medicine
+from apps.orders.models import Order
+from apps.tasks.models import Task
+
+
+@extend_schema(exclude=True)
+class DashboardViewSet(ViewSet):
+    permission_classes = [IsAdmin]
+
+    def list(self, request):
+        medicines = Medicine.objects.all()
+        orders = Order.objects.all()
+        tasks = Task.objects.all()
+        users = get_user_model().objects.filter(is_active=True, is_blocked=False)
+
+        return Response({
+            'medicines': medicines.count(),
+            'orders': orders.count(),
+            'tasks': tasks.count(),
+            'users': users.count(),
+            'low_stock': medicines.filter(quantity__lte=F('min_quantity')).count(),
+            'pending_orders': orders.filter(status='pending').count(),
+            'active_tasks': tasks.filter(status='in_progress').count(),
+        })

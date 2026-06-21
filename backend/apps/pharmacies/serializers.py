@@ -1,6 +1,7 @@
+from django.contrib.auth import authenticate, get_user_model
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
-from django.contrib.auth import authenticate
-from django.contrib.auth import get_user_model
+
 from .models import Pharmacy, PharmacyProduct
 
 User = get_user_model()
@@ -36,6 +37,7 @@ class PharmacyDetailSerializer(serializers.ModelSerializer):
                   'is_active', 'is_approved', 'approved_at', 'orders_count',
                   'products', 'created_at', 'updated_at']
 
+    @extend_schema_field(serializers.IntegerField())
     def get_orders_count(self, obj):
         return obj.orders.count()
 

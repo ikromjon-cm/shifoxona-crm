@@ -1,29 +1,47 @@
-from rest_framework import viewsets, status, permissions
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from django.utils import timezone
+import openpyxl
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
-import openpyxl
-from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
-from .models import Delivery
-from .serializers import DeliverySerializer, DeliveryCreateSerializer, CourierLocationSerializer
+from django.utils import timezone
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from apps.accounts.permissions import CanViewDeliveries
 from apps.notifications.models import Notification
+
+from .models import Delivery, DeliveryLocationLog
+from .serializers import (
+    CourierLocationSerializer,
+    DeliveryCreateSerializer,
+    DeliveryDetailSerializer,
+    DeliveryLocationLogSerializer,
+    DeliverySerializer,
+)
 
 User = get_user_model()
 
 
 class DeliveryViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    queryset = Delivery.objects.none()
+    permission_classes = [CanViewDeliveries]
 
     def get_serializer_class(self):
         if self.action == 'create':
             return DeliveryCreateSerializer
+        if self.action in ['retrieve']:
+            return DeliveryDetailSerializer
         return DeliverySerializer
 
     def get_queryset(self):
-        qs = Delivery.objects.select_related('order__pharmacy', 'courier')
+        if getattr(self, 'swagger_fake_view', False):
+            return Delivery.objects.none()
         user = self.request.user
+        if user.is_anonymous:
+            return Delivery.objects.none()
+        if user.is_super_admin:
+            return Delivery.objects.all()
+        qs = Delivery.objects.select_related('order__pharmacy', 'courier')
         if user.role == 'pharmacy':
             if hasattr(user, 'pharmacy_profile'):
                 qs = qs.filter(order__pharmacy=user.pharmacy_profile)
@@ -40,6 +58,18 @@ class DeliveryViewSet(viewsets.ModelViewSet):
         delivery.courier_lng = serializer.validated_data['longitude']
         delivery.courier_location_updated_at = timezone.now()
         delivery.save(update_fields=['courier_lat', 'courier_lng', 'courier_location_updated_at'])
+
+        DeliveryLocationLog.objects.create(
+            delivery=delivery,
+            courier=request.user,
+            latitude=serializer.validated_data['latitude'],
+            longitude=serializer.validated_data['longitude'],
+            accuracy=serializer.validated_data.get('accuracy'),
+            speed=serializer.validated_data.get('speed'),
+            bearing=serializer.validated_data.get('bearing'),
+            battery_level=serializer.validated_data.get('battery_level'),
+        )
+
         return Response({'message': 'Joylashuv yangilandi'})
 
     @action(detail=True, methods=['post'])
@@ -95,9 +125,23 @@ class DeliveryViewSet(viewsets.ModelViewSet):
 
         return Response(DeliverySerializer(delivery, context={'request': request}).data)
 
+    @action(detail=True, methods=['get'])
+    def location_history(self, request, pk=None):
+        delivery = self.get_object()
+        logs = delivery.location_logs.all()[:500]
+        serializer = DeliveryLocationLogSerializer(logs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def my_deliveries(self, request):
+        qs = self.get_queryset().filter(courier=request.user)
+        page = self.paginate_queryset(qs)
+        serializer = DeliverySerializer(page or qs, many=True, context={'request': request})
+        return self.get_paginated_response(serializer.data) if page else Response(serializer.data)
+
+
     @action(detail=False, methods=['get'])
     def export_excel(self, request):
-        qs = self.get_queryset().select_related('order__pharmacy', 'courier')
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = 'Yetkazib berish'

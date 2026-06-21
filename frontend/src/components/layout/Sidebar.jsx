@@ -1,72 +1,95 @@
 import { NavLink } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard, Pill, Warehouse, Building2, Package,
-  FileText, Bell, Shield, Users, Menu, X, LogOut,
-  TrendingUp, TrendingDown, Settings, Truck, CheckSquare,
-  ChevronRight
+  FileText, Bell, Shield, Users, X, LogOut,
+  TrendingUp, TrendingDown, Settings, Truck,
+  ChevronRight, ListTodo, Clock, MessageSquare, QrCode,
+  ClipboardList, ShieldCheck, CheckSquare
 } from 'lucide-react'
 
-const navSections = [
-  {
-    label: 'Asosiy',
-    items: [
-      { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    ],
-  },
-  {
-    label: 'Mahsulotlar',
-    items: [
-      { to: '/medicines', icon: Pill, label: 'Mahsulotlar' },
-      { to: '/medicines/categories', icon: Package, label: 'Kategoriyalar' },
-      { to: '/medicines/suppliers', icon: Building2, label: "Yetkazib beruvchilar" },
-    ],
-  },
-  {
-    label: 'Ombor',
-    items: [
-      { to: '/pharmacies', icon: Building2, label: 'Dorixonalar' },
-      { to: '/inventory', icon: Warehouse, label: 'Inventar' },
-      { to: '/warehouse/income', icon: TrendingUp, label: 'Kirim' },
-      { to: '/warehouse/expense', icon: TrendingDown, label: 'Tarqatish' },
-      { to: '/warehouse/delivery', icon: Truck, label: 'Yetkazib berish' },
-      { to: '/warehouse/movements', icon: Warehouse, label: 'Harakatlar' },
-    ],
-  },
-  {
-    label: 'Hisobot',
-    items: [
-      { to: '/reports', icon: FileText, label: 'Hisobotlar' },
-    ],
-  },
-  {
-    label: 'Bildirishnomalar',
-    items: [
-      { to: '/notifications', icon: Bell, label: 'Bildirishnomalar' },
-    ],
-  },
-  {
-    label: 'Sozlamalar',
-    items: [
-      { to: '/settings', icon: Settings, label: 'Sozlamalar' },
-    ],
-  },
-]
-
-const adminSection = {
-  label: 'Admin',
-  items: [
-    { to: '/pharmacies/approval', icon: CheckSquare, label: 'Dorixona tasdiqlash' },
-    { to: '/users', icon: Users, label: 'Foydalanuvchilar' },
-    { to: '/audit-logs', icon: Shield, label: 'Audit log' },
-  ],
-}
-
 export default function Sidebar({ isOpen, onClose }) {
+  const { t } = useTranslation()
   const { isSuperAdmin, user, logout } = useAuth()
 
+  const navSections = [
+    {
+      label: t('nav.main'),
+      items: [
+        { to: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
+      ],
+    },
+    {
+      label: t('nav.products'),
+      items: [
+        { to: '/medicines', icon: Pill, label: t('nav.medicines') },
+        { to: '/medicines/categories', icon: Package, label: t('nav.categories') },
+        { to: '/medicines/suppliers', icon: Building2, label: t('nav.suppliers') },
+      ],
+    },
+    {
+      label: t('nav.warehouse'),
+      items: [
+        { to: '/pharmacies', icon: Building2, label: t('nav.pharmacies') },
+        { to: '/inventory', icon: Warehouse, label: t('nav.inventory') },
+        { to: '/warehouse/income', icon: TrendingUp, label: t('nav.income') },
+        { to: '/warehouse/expense', icon: TrendingDown, label: t('nav.expense') },
+        { to: '/warehouse/delivery', icon: Truck, label: t('nav.delivery') },
+        { to: '/warehouse/movements', icon: Warehouse, label: t('nav.movements') },
+        { to: '/warehouse/bins', icon: QrCode, label: t('nav.bins') },
+        { to: '/warehouse/pick-orders', icon: ClipboardList, label: t('nav.pickOrders') },
+      ],
+    },
+    {
+      label: t('nav.workflow'),
+      items: [
+        { to: '/tasks', icon: ListTodo, label: t('nav.tasks') },
+        { to: '/attendance', icon: Clock, label: t('nav.attendance') },
+        { to: '/chat', icon: MessageSquare, label: t('nav.chat') },
+      ],
+    },
+    {
+      label: t('nav.reports'),
+      items: [
+        { to: '/reports', icon: FileText, label: t('nav.reports') },
+      ],
+    },
+    {
+      label: t('nav.notifications'),
+      items: [
+        { to: '/notifications', icon: Bell, label: t('nav.notifications') },
+      ],
+    },
+    {
+      label: t('nav.settings'),
+      items: [
+        { to: '/settings', icon: Settings, label: t('nav.settings') },
+      ],
+    },
+  ]
+
+  const adminSection = {
+    label: t('nav.pharmacyApproval'),
+    items: [
+      { to: '/pharmacies/approval', icon: CheckSquare, label: t('nav.pharmacyApproval') },
+      { to: '/users', icon: Users, label: t('nav.users') },
+      { to: '/rbac/roles', icon: ShieldCheck, label: t('nav.roles') },
+      { to: '/audit-logs', icon: Shield, label: t('nav.auditLog') },
+    ],
+  }
+
   const initials = (user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')
+
+  const roleLabel = user?.role === 'superadmin' ? t('role.superadmin')
+    : user?.role === 'admin' ? t('role.admin')
+    : user?.role === 'operator' ? t('role.operator')
+    : user?.role === 'warehouse' ? t('role.warehouse')
+    : user?.role === 'driver' ? t('role.driver')
+    : user?.role === 'finance' ? t('role.finance')
+    : user?.role === 'pharmacy' ? t('role.pharmacy')
+    : user?.role || ''
 
   return (
     <>
@@ -88,9 +111,9 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
             <div>
               <h1 className="text-sm font-bold bg-gradient-to-r from-medical-600 to-brand-600 dark:from-medical-400 dark:to-brand-400 bg-clip-text text-transparent">
-                Shifoxona CRM
+                {t('app.title')}
               </h1>
-              <p className="text-[10px] text-gray-400 font-medium">Farmatsevtika tizimi</p>
+              <p className="text-[10px] text-gray-400 font-medium">{t('app.tagline')}</p>
             </div>
           </div>
           <button onClick={onClose} className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -106,9 +129,7 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.first_name} {user?.last_name}</p>
-              <p className="text-[11px] text-gray-500 truncate">
-                {user?.role === 'superadmin' ? 'Super Admin' : user?.role === 'operator' ? 'Operator' : user?.role}
-              </p>
+              <p className="text-[11px] text-gray-500 truncate">{roleLabel}</p>
             </div>
           </div>
         </div>
@@ -155,7 +176,7 @@ export default function Sidebar({ isOpen, onClose }) {
           {isSuperAdmin && (
             <div>
               <p className="px-3 mb-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-[0.12em]">
-                {adminSection.label}
+                {t('admin.title')}
               </p>
               <div className="space-y-0.5">
                 {adminSection.items.map((item) => (
@@ -196,7 +217,7 @@ export default function Sidebar({ isOpen, onClose }) {
             className="group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
           >
             <LogOut className="h-4.5 w-4.5 transition-transform group-hover:-translate-x-0.5" />
-            Chiqish
+            {t('nav.logout')}
           </button>
         </div>
       </aside>

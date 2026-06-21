@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ordersAPI } from '@/services/api'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -8,28 +9,29 @@ import { DataTable } from '@/components/ui/DataTable'
 import { ClipboardList, Clock, Truck, CheckCircle, XCircle, Package } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
 
-const statusBadge = (status) => {
+const statusBadge = (status, t) => {
   const variants = {
     pending: 'warning', confirmed: 'info', preparing: 'info',
     shipped: 'info', delivered: 'success', received: 'success', cancelled: 'danger',
   }
   const labels = {
-    pending: 'Kutilmoqda', confirmed: 'Tasdiqlandi', preparing: 'Tayyorlanmoqda',
-    shipped: "Yo'lga chiqdi", delivered: 'Yetkazildi', received: 'Qabul qilindi', cancelled: 'Bekor qilindi',
+    pending: t('pharmacy.pending'), confirmed: t('pharmacy.confirmed'), preparing: t('pharmacy.preparing'),
+    shipped: t('pharmacy.inTransit'), delivered: t('pharmacy.delivered'), received: t('pharmacy.received'), cancelled: t('pharmacy.cancelled'),
   }
   return <Badge variant={variants[status] || 'default'}>{labels[status] || status}</Badge>
 }
 
-const statuses = [
-  { key: 'all', label: 'Barchasi', icon: ClipboardList },
-  { key: 'pending', label: 'Kutilmoqda', icon: Clock },
-  { key: 'shipped', label: "Yo'lda", icon: Truck },
-  { key: 'delivered', label: 'Yetkazildi', icon: Package },
-  { key: 'received', label: 'Qabul qilingan', icon: CheckCircle },
-  { key: 'cancelled', label: 'Bekor qilingan', icon: XCircle },
+const statuses = (t) => [
+  { key: 'all', label: t('pharmacy.all'), icon: ClipboardList },
+  { key: 'pending', label: t('pharmacy.pending'), icon: Clock },
+  { key: 'shipped', label: t('pharmacy.inTransit'), icon: Truck },
+  { key: 'delivered', label: t('pharmacy.delivered'), icon: Package },
+  { key: 'received', label: t('pharmacy.received'), icon: CheckCircle },
+  { key: 'cancelled', label: t('pharmacy.cancelled'), icon: XCircle },
 ]
 
 export default function PharmacyOrdersPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -43,9 +45,7 @@ export default function PharmacyOrdersPage() {
     try {
       const res = await ordersAPI.myOrders()
       setOrders(res.data.results || res.data)
-    } catch (err) {
-      console.error('Failed to load orders')
-    } finally { setLoading(false) }
+    } catch { /* empty */ } finally { setLoading(false) }
   }
 
   const filtered = activeTab === 'all'
@@ -53,22 +53,22 @@ export default function PharmacyOrdersPage() {
     : orders.filter(o => o.status === activeTab)
 
   const columns = [
-    { key: 'order_number', label: 'Buyurtma raqami' },
+    { key: 'order_number', label: t('pharmacy.orderNumber') },
     {
-      key: 'created_at', label: 'Vaqt',
+      key: 'created_at', label: t('pharmacy.time'),
       render: (r) => formatDateTime(r.created_at),
     },
     {
-      key: 'total_amount', label: 'Summa',
+      key: 'total_amount', label: t('pharmacy.sum'),
       render: (r) => Number(r.total_amount).toLocaleString() + ' so\'m',
     },
-    { key: 'total_items', label: 'Mahsulotlar' },
-    { key: 'status', label: 'Holati', render: (r) => statusBadge(r.status) },
+    { key: 'total_items', label: t('pharmacy.products') },
+    { key: 'status', label: t('pharmacy.status'), render: (r) => statusBadge(r.status, t) },
     {
       key: 'actions', label: '',
       render: (r) => (
         <Button variant="ghost" size="sm" onClick={() => navigate(`/pharmacy/orders/${r.id}`)}>
-          Batafsil
+          {t('pharmacy.details')}
         </Button>
       ),
     },
@@ -78,7 +78,7 @@ export default function PharmacyOrdersPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <ClipboardList className="h-6 w-6 text-medical-500" />
-        <h1 className="text-2xl font-bold">Buyurtmalarim</h1>
+        <h1 className="text-2xl font-bold">{t('pharmacy.myOrders')}</h1>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-2">
@@ -109,7 +109,7 @@ export default function PharmacyOrdersPage() {
             columns={columns}
             data={filtered}
             loading={loading}
-            emptyMessage={activeTab === 'all' ? 'Buyurtmalar mavjud emas' : 'Bu holatda buyurtmalar mavjud emas'}
+            emptyMessage={activeTab === 'all' ? t('pharmacy.noOrders') : t('pharmacy.noOrdersInStatus')}
           />
         </CardContent>
       </Card>

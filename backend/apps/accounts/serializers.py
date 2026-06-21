@@ -1,7 +1,8 @@
-from rest_framework import serializers
 from django.contrib.auth import authenticate
+from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User
+
+from .models import PasswordResetCode, User
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -68,6 +69,40 @@ class TokenResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
     refresh = serializers.CharField()
     user = UserSerializer()
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    login = serializers.CharField()
+
+    def validate_login(self, value):
+        try:
+            User.objects.get(login=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError('Bunday foydalanuvchi topilmadi')
+        return value
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    login = serializers.CharField()
+    code = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(min_length=6, write_only=True)
+
+    def validate(self, data):
+        try:
+            user = User.objects.get(login=data['login'])
+        except User.DoesNotExist:
+            raise serializers.ValidationError('Bunday foydalanuvchi topilmadi')
+
+        from django.utils import timezone
+        reset = PasswordResetCode.objects.filter(
+            user=user, code=data['code'], is_used=False, expires_at__gte=timezone.now()
+        ).first()
+        if not reset:
+            raise serializers.ValidationError('Kod noto\'g\'ri yoki muddati o\'tgan')
+
+        data['user'] = user
+        data['reset'] = reset
+        return data
 
 
 def get_tokens_for_user(user):

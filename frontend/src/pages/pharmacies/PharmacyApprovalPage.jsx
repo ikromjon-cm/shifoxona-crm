@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { pharmaciesAPI } from '@/services/api'
 import { DataTable } from '@/components/ui/DataTable'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Modal } from '@/components/ui/Modal'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { CheckCircle, XCircle, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-const statusBadge = (pharmacy) => {
-  if (!pharmacy.is_approved) return <Badge variant="warning">Kutilmoqda</Badge>
-  return <Badge variant="success">Tasdiqlangan</Badge>
+const statusBadge = (pharmacy, t) => {
+  if (!pharmacy.is_approved) return <Badge variant="warning">{t('pharmacy.pending')}</Badge>
+  return <Badge variant="success">{t('pharmacy.isApproved')}</Badge>
 }
 
 export default function PharmacyApprovalPage() {
+  const { t } = useTranslation()
   const [pharmacies, setPharmacies] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
@@ -26,7 +27,7 @@ export default function PharmacyApprovalPage() {
       const res = await pharmaciesAPI.list()
       setPharmacies(res.data.results || res.data)
     } catch (err) {
-      toast.error('Dorixonalarni yuklashda xatolik')
+      toast.error(t('pharmacy.errorLoad'))
     } finally { setLoading(false) }
   }
 
@@ -34,10 +35,10 @@ export default function PharmacyApprovalPage() {
     setProcessing(id)
     try {
       await pharmaciesAPI.approve(id, { approve })
-      toast.success(approve ? 'Dorixona tasdiqlandi' : 'Dorixona rad etildi')
+      toast.success(approve ? t('pharmacy.approved') : t('pharmacy.rejected'))
       fetchPharmacies()
     } catch (err) {
-      toast.error('Xatolik yuz berdi')
+      toast.error(t('common.error'))
     } finally { setProcessing(null) }
   }
 
@@ -46,13 +47,13 @@ export default function PharmacyApprovalPage() {
     : pharmacies.filter(p => p.is_approved)
 
   const columns = [
-    { key: 'name', label: 'Nomi' },
-    { key: 'stir_or_license', label: 'STIR/Litsenziya' },
-    { key: 'phone', label: 'Telefon' },
-    { key: 'region', label: 'Viloyat' },
-    { key: 'district', label: 'Tuman' },
-    { key: 'responsible_person', label: "Mas'ul shaxs" },
-    { key: 'status', label: 'Holati', render: (r) => statusBadge(r) },
+    { key: 'name', label: t('medicine.name') },
+    { key: 'stir_or_license', label: t('pharmacy.stirLicense') },
+    { key: 'phone', label: t('pharmacy.phone') },
+    { key: 'region', label: t('region.region') },
+    { key: 'district', label: t('region.district') },
+    { key: 'responsible_person', label: t('pharmacy.responsible') },
+    { key: 'status', label: t('medicine.status'), render: (r) => statusBadge(r, t) },
     {
       key: 'actions', label: '',
       render: (r) => (
@@ -65,10 +66,10 @@ export default function PharmacyApprovalPage() {
           {!r.is_approved && (
             <>
               <Button variant="success" size="sm" onClick={() => handleApprove(r.id, true)} disabled={processing === r.id}>
-                <CheckCircle className="h-4 w-4 mr-1" /> Tasdiqlash
+                <CheckCircle className="h-4 w-4 mr-1" /> {t('pharmacy.approve')}
               </Button>
               <Button variant="destructive" size="sm" onClick={() => handleApprove(r.id, false)} disabled={processing === r.id}>
-                <XCircle className="h-4 w-4 mr-1" /> Rad etish
+                <XCircle className="h-4 w-4 mr-1" /> {t('pharmacy.reject')}
               </Button>
             </>
           )}
@@ -81,8 +82,8 @@ export default function PharmacyApprovalPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Dorixona tasdiqlash</h1>
-          <p className="text-gray-500 mt-1">Yangi ro'yxatdan o'tgan dorixonalarni tasdiqlash</p>
+          <h1 className="text-2xl font-bold">{t('pharmacy.approval')}</h1>
+          <p className="text-gray-500 mt-1">{t('pharmacy.approvalDesc')}</p>
         </div>
         <div className="flex gap-2">
           {['all', 'pending', 'approved'].map(f => (
@@ -92,7 +93,7 @@ export default function PharmacyApprovalPage() {
               size="sm"
               onClick={() => setFilter(f)}
             >
-              {f === 'all' ? 'Barchasi' : f === 'pending' ? 'Kutilayotgan' : 'Tasdiqlangan'}
+              {f === 'all' ? t('common.all') : f === 'pending' ? t('pharmacy.filterPending') : t('pharmacy.isApproved')}
             </Button>
           ))}
         </div>
