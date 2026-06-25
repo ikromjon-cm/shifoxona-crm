@@ -1,11 +1,15 @@
 #!/bin/sh
 set -e
 
-echo "Waiting for PostgreSQL at $DB_HOST:$DB_PORT..."
-./wait-for-it.sh "$DB_HOST:$DB_PORT" -t 30
+if [ -n "$DATABASE_URL" ]; then
+  echo "DATABASE_URL is set, skipping DB wait"
+else
+  echo "Waiting for PostgreSQL at $DB_HOST:$DB_PORT..."
+  ./wait-for-it.sh "$DB_HOST:$DB_PORT" -t 30
 
-echo "Waiting for Redis at $REDIS_HOST:$REDIS_PORT..."
-./wait-for-it.sh "$REDIS_HOST:$REDIS_PORT" -t 30
+  echo "Waiting for Redis at $REDIS_HOST:$REDIS_PORT..."
+  ./wait-for-it.sh "$REDIS_HOST:$REDIS_PORT" -t 30
+fi
 
 echo "Running migrations..."
 python manage.py migrate --noinput

@@ -1,29 +1,48 @@
 services:
   - type: web
     name: shifoxona-backend
-    env: python
+    runtime: docker
+    repo: https://github.com/ikromjon-cm/shifoxona-crm
+    rootDir: backend
     region: frankfurt
     plan: free
-    buildCommand: pip install -r backend/requirements.txt
-    startCommand: cd backend && bash startup.sh
-    healthCheckPath: /api/v1/accounts/login/
+    branch: main
+    healthCheckPath: /health/
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: shifoxona-db
-          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: "*"
+        value: ".onrender.com,localhost"
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
-      - key: DJANGO_SETTINGS_MODULE
-        value: config.settings
+        value: "https://shifoxona-crm.vercel.app,http://localhost:5173"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://shifoxona-backend.onrender.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shifoxona-db
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          name: shifoxona-redis
+          type: redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          name: shifoxona-redis
+          type: redis
+          property: port
 
 databases:
   - name: shifoxona-db
-    plan: free
     region: frankfurt
+    plan: free
+    databaseName: shifoxona_db
+    ipAllowList: []
+
+redis:
+  - name: shifoxona-redis
+    region: frankfurt
+    plan: free
+    maxmemoryPolicy: noeviction

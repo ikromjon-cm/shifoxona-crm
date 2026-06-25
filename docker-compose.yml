@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${DB_NAME:-shifoxona_db}
       POSTGRES_USER: ${DB_USER:-postgres}
