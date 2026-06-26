@@ -1,104 +1,57 @@
-"""Add db_index=True to key fields across all models."""
-import re
-import os
+"""
+Migration to add performance indexes across all apps.
+Run: python manage.py migrate
+"""
+from django.db import migrations, models
 
-BASE = '/Users/user/Documents/it park/shifoxona/backend/apps'
 
-# (model_file, field_pattern -> replacement)
-# Pattern: field_type = models.CharField(...) -> add db_index=True
-# We target fields by their names
+class Migration(migrations.Migration):
+    atomic = False
 
-ADD_INDEX = {
-    # accounts/models.py
-    'accounts/models.py': {
-        'role': r'(role = models\.CharField\([^)]*)(\))',
-        'is_active': r'(is_active = models\.BooleanField\([^)]*)(\))',
-        'is_blocked': r'(is_blocked = models\.BooleanField\([^)]*)(\))',
-        'created_at': r'(created_at = models\.DateTimeField\(auto_now_add=True[^)]*)(\))',
-    },
-    # notifications/models.py
-    'notifications/models.py': {
-        'type': r'(type = models\.CharField\([^)]*)(\))',
-        'user': r'(user = models\.ForeignKey\([^)]*related_name=.notifications.[^)]*)(\))',
-        'is_read': r'(is_read = models\.BooleanField\([^)]*)(\))',
-        'is_global': r'(is_global = models\.BooleanField\([^)]*)(\))',
-    },
-    # orders/models.py
-    'orders/models.py': {
-        'status': r'(status = models\.CharField\([^)]*)(\))',
-        'created_by': r'(created_by = models\.ForeignKey\([^)]*related_name=.orders.[^)]*)(\))',
-        'pharmacy': r'(pharmacy = models\.ForeignKey\([^)]*related_name=.orders.[^)]*)(\))',
-    },
-    # tasks/models.py
-    'tasks/models.py': {
-        'priority': r'(priority = models\.CharField\([^)]*)(\))',
-        'task_type': r'(task_type = models\.CharField\([^)]*)(\))',
-    },
-    # delivery/models.py
-    'delivery/models.py': {
-        'status': r'(status = models\.CharField\([^)]*)(\))',
-        'courier': r'(courier = models\.ForeignKey\([^)]*related_name=.deliveries.[^)]*)(\))',
-    },
-    # medicines/models.py
-    'medicines/models.py': {
-        'is_active': r'(is_active = models\.BooleanField\([^)]*)(\))',
-        'supplier': r'(supplier = models\.ForeignKey\([^)]*related_name=.medicines.[^)]*)(\))',
-        'barcode': r'(barcode = models\.CharField\([^)]*)(\))',
-    },
-    # audit_logs/models.py
-    'audit_logs/models.py': {
-        'action': r'(action = models\.CharField\([^)]*)(\))',
-        'model_name': r'(model_name = models\.CharField\([^)]*)(\))',
-    },
-    # chat/models.py
-    'chat/models.py': {
-        'is_read': r'(is_read = models\.BooleanField\([^)]*)(\))',
-        'sender': r'(sender = models\.ForeignKey\([^)]*related_name=.sent_messages.[^)]*)(\))',
-    },
-    # attendance/models.py
-    'attendance/models.py': {
-        'status': r'(status = models\.CharField\([^)]*)(\))',
-        'attendance_type': r'(attendance_type = models\.CharField\([^)]*)(\))',
-    },
-    # warehouse/models.py
-    'warehouse/models.py': {
-        'barcode': r'(barcode = models\.CharField\([^)]*unique=[^)]*)(\))',
-    },
-}
+    dependencies = [
+        ('accounts', '0005_add_db_indexes'),
+        ('medicines', '0006_add_db_indexes'),
+        ('orders', '0003_add_db_indexes'),
+        ('delivery', '0005_add_db_indexes'),
+        ('warehouse', '0005_expensetransaction_warehouse_e_medicin_38f227_idx_and_more'),
+        ('audit_logs', '0002_add_db_indexes'),
+        ('notifications', '0003_add_db_indexes'),
+        ('attendance', '0002_add_db_indexes'),
+        ('chat', '0003_add_db_indexes'),
+        ('tasks', '0002_add_db_indexes'),
+    ]
 
-def add_db_index(field_type, field_name):
-    """Add db_index=True before the closing paren"""
-    if 'db_index' in field_type:
-        return field_type
-    # Insert db_index=True before the closing )
-    return field_type.rstrip().rstrip(',') + ', db_index=True)'
-
-for rel_path, fields in ADD_INDEX.items():
-    filepath = os.path.join(BASE, rel_path)
-    if not os.path.exists(filepath):
-        print(f"SKIP {filepath} - not found")
-        continue
-    
-    with open(filepath) as f:
-        content = f.read()
-    
-    original = content
-    for field_name, pattern in fields.items():
-        def replacer(m):
-            full = m.group(0)
-            # Check if db_index already present
-            if 'db_index' in full:
-                return full
-            # Replace closing ) with , db_index=True)
-            return full.rstrip()[:-1] + ', db_index=True)'
-        
-        content = re.sub(pattern, replacer, content)
-    
-    if content != original:
-        with open(filepath, 'w') as f:
-            f.write(content)
-        print(f"UPDATED {rel_path}")
-    else:
-        print(f"NO CHANGE {rel_path}")
-
-print("\nDone! Run: python manage.py makemigrations")
+    operations = [
+        migrations.AddIndex(
+            model_name='notification',
+            index=models.Index(fields=['user', 'is_read', 'created_at'], name='notif_user_read_created_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='incometransaction',
+            index=models.Index(fields=['created_by', 'created_at'], name='income_created_by_date_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='expensetransaction',
+            index=models.Index(fields=['created_by', 'created_at'], name='expense_created_by_date_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='inventorymovement',
+            index=models.Index(fields=['reference_type', 'reference_id'], name='movement_ref_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='pickorder',
+            index=models.Index(fields=['status', 'warehouse'], name='pickorder_status_wh_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='chatroom',
+            index=models.Index(fields=['room_type', 'is_active'], name='chatroom_type_active_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='leaverequest',
+            index=models.Index(fields=['user', 'status'], name='leaverequest_user_status_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='attendancesession',
+            index=models.Index(fields=['user', 'date'], name='attendsession_user_date_idx'),
+        ),
+    ]

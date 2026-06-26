@@ -169,7 +169,7 @@ class DeliveryViewSet(viewsets.ModelViewSet):
                 d.order.pharmacy.name if d.order and d.order.pharmacy else '-',
                 (d.courier.get_full_name() or d.courier.login) if d.courier else '-',
                 status_labels.get(d.status, d.status),
-                d.delivery_address or '',
+                d.order.pharmacy.address if d.order and d.order.pharmacy else '',
                 d.created_at.strftime('%d.%m.%Y %H:%M') if d.created_at else '',
             ]
             for col, val in enumerate(data, 1):

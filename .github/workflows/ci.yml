@@ -244,3 +244,12 @@ jobs:
         with:
           name: shifoxona-ios.ipa
           path: mobile/build/ios/*.ipa
+
+  deploy-render:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - name: Deploy to Render
+        run: |
+          curl -X POST "https://api.render.com/deploy/srv/${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_DEPLOY_KEY }}"
