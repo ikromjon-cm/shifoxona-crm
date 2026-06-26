@@ -10,6 +10,7 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
 const MedicinesPage = lazy(() => import('@/pages/medicines/MedicinesPage'))
 const CategoriesPage = lazy(() => import('@/pages/medicines/CategoriesPage'))
@@ -79,7 +80,7 @@ export default function App() {
               <Route
                 path="/pharmacy"
                 element={
-                  <ProtectedRoute pharmacyOnly>
+                  <ProtectedRoute requirePharmacy>
                     <PharmacyLayout />
                   </ProtectedRoute>
                 }
@@ -129,7 +130,7 @@ export default function App() {
                 <Route path="roles" element={<RolesPage />} />
               </Route>
 
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </AuthProvider>

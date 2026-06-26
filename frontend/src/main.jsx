@@ -1,10 +1,21 @@
 import React, { Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as Sentry from '@sentry/react'
 import App from './App'
 import 'leaflet/dist/leaflet.css'
 import './index.css'
 import './i18n/i18n'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
@@ -22,8 +33,10 @@ const Fallback = () => (
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Suspense fallback={<Fallback />}>
-      <App />
-    </Suspense>
+    <QueryClientProvider client={queryClient}>
+      <Suspense fallback={<Fallback />}>
+        <App />
+      </Suspense>
+    </QueryClientProvider>
   </React.StrictMode>
 )

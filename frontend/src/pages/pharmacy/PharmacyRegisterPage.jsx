@@ -34,7 +34,12 @@ export default function PharmacyRegisterPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      await pharmaciesAPI.register(form)
+      const fd = new FormData()
+      Object.entries(form).forEach(([key, value]) => {
+        if (value !== null && value !== '') fd.append(key, value)
+      })
+      if (form.imageFile) fd.append('image', form.imageFile)
+      await pharmaciesAPI.register(fd)
       toast.success(t('pharmacy.registerSuccess'))
       navigate('/pharmacy/login')
     } catch (err) {
@@ -123,6 +128,7 @@ export default function PharmacyRegisterPage() {
                   <input type="file" accept="image/*" className="text-sm" onChange={(e) => {
                     const file = e.target.files[0]
                     if (file) {
+                      update('imageFile', file)
                       const reader = new FileReader()
                       reader.onload = () => update('image', reader.result.split(',')[1])
                       reader.readAsDataURL(file)
