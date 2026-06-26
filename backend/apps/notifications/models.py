@@ -1,5 +1,9 @@
+import logging
+
 from django.conf import settings
 from django.db import models
+
+logger = logging.getLogger(__name__)
 
 
 class Notification(models.Model):
@@ -46,8 +50,8 @@ class Notification(models.Model):
                     'link': self.link or '',
                     'created_at': str(self.created_at),
                 })
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to send realtime notification: {e}")
 
 
 class NotificationSetting(models.Model):

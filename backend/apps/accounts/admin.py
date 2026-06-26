@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User
+from .models import Employee, PasswordResetCode, User
 
 
 class UserAdmin(BaseUserAdmin):
@@ -24,3 +24,17 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(User, UserAdmin)
+
+
+@admin.register(Employee)
+class EmployeeAdmin(admin.ModelAdmin):
+    list_display = ['user', 'company', 'branch', 'department', 'position', 'employee_id', 'is_active']
+    list_filter = ['is_active', 'company', 'branch', 'department']
+    search_fields = ['user__login', 'user__first_name', 'user__last_name', 'employee_id']
+
+
+@admin.register(PasswordResetCode)
+class PasswordResetCodeAdmin(admin.ModelAdmin):
+    list_display = ['user', 'code', 'created_at', 'is_used']
+    list_filter = ['is_used']
+    search_fields = ['user__login', 'code']

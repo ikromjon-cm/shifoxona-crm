@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../api_client.dart';
 
 class ChatWsService {
   WebSocketChannel? _channel;
@@ -31,7 +32,8 @@ class ChatWsService {
     _controller?.close();
     _controller = StreamController<Map<String, dynamic>>.broadcast();
 
-    final wsUrl = 'ws://10.0.2.2:80/ws/chat/$_currentRoomId/?token=$token';
+    final baseUrl = ApiClient.baseUrl.replaceFirst('http://', '').replaceFirst('/api/v1', '');
+    final wsUrl = 'ws://$baseUrl/ws/chat/$_currentRoomId/?token=$token';
     try {
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
 

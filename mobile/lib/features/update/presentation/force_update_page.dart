@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../i18n/services/translation_service.dart';
@@ -13,8 +14,12 @@ class ForceUpdatePage extends StatelessWidget {
   });
 
   Future<void> _update() async {
-    final uri = Uri.parse('https://apps.apple.com/app/idYOUR_APP_ID');
-    // Replace YOUR_APP_ID with your actual App Store ID before release
+    Uri uri;
+    if (Platform.isAndroid) {
+      uri = Uri.parse('https://play.google.com/store/apps/details?id=com.shifoxona.shifoxona_mobile');
+    } else {
+      uri = Uri.parse('https://apps.apple.com/app/idYOUR_APP_ID');
+    }
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }

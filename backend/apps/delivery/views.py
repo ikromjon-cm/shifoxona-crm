@@ -142,6 +142,7 @@ class DeliveryViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def export_excel(self, request):
+        qs = self.filter_queryset(self.get_queryset())
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = 'Yetkazib berish'
